@@ -1,0 +1,25 @@
+#: Title       : Isvalidip
+#: Date        : 2016-05-15
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Dash shell script function declarations file
+#:             : Check argument for valid dotted-quad IP address
+#: Options     : N/A
+##
+## -- Functions ----------------------------------------------------------------
+isvalidip() {
+    # Local variables ("local" must be function's first statement)
+    local IFS   ## Temporal local copy of $IFS
+    case $1 in  ## Reject the following:
+                ## * Empty (null string);
+                ## * Anything other than digits and dots;
+                ## * Anything not ending in a digit.
+        "" | *[!0-9.]* | *[!0-9]) return 1 ;;
+    esac
+    IFS=.       ## Change IFS toa dot, but only in this function
+    # Place the IP address into positional parameters using word splitting
+    set -- $1       ## After word splitting each element becomes a parameter
+    [ $# -eq 4 ] && ## Require four parameters, each less than 256
+        [ ${1:-666} -le 255 ] && [ ${2:-666} -le 255 ] && ## Use invalid default
+        [ ${3:-666} -le 255 ] && [ ${4:-666} -le 255 ]    ## 666 for empty pars.
+}

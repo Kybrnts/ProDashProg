@@ -1,0 +1,75 @@
+#!/bin/sh
+#: Title       : Uinfo
+#: Date        : 2016-05-17
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script
+#:             : Show info. about the environment
+#: Options     : N/A
+##
+## -- Externals required for execution -----------------------------------------
+type stty >/dev/null || exit 1 ## 
+##
+## -- Functions ----------------------------------------------------------------
+setvar() { #@ DESCRIPTION: Sets $1 variable specified by reference, to $2 value.
+           #@ $1 MUST BE A VALID NAME!
+           #@ USAGE: setvar NAME [ VALUE ]
+           #@        /!\ - WARNING! - /!\ $1 must be a valid name
+    eval "$1=\${2+\"\$2\"}" ## Without the right side backslash, escaped chars
+                            ## won't be part of assignment
+}
+getTrmSze() { #@ DESCRIPTION: Gets current terminal size in rows and columns,
+              #@              storing its values in $1 and $2 names respectively
+              #@ USAGE: getTrmSze NAME1 NAME2
+    # Process below "stty" output line by line
+    while IFS= read -r _RPLY; do              ## Read bytes into _RPLY until EOL
+        case $_RPLY in                        ## disabling backslashe escape.
+            *rows*columns*)                   ## If _RPLY contain dimensions:
+                _RPLY=${_RPLY#*"rows "}       ## * Remove up to before rows#,
+                case $_RPLY in                ##   it must be numeric or else
+                    "" | [!0-9]*) return 1 ;; ##   finish w/errors;
+                esac                          ##
+                setvar $1 ${_RPLY%%[!0-9]*}   ## * Extract rows# and save;
+                _RPLY=${_RPLY#*"columns "}    ## * Remove up to before cols#
+                case $_RPLY in                ##   it must be numeric or else
+                    "" | [!0-9]*) return 2 ;; ##   finish w/errors;
+                esac                          ##
+                setvar $2 ${_RPLY%%[!0-9]*}   ## * Extract cols# and save;
+                break ;;                      ## * Stop reading.
+        esac
+    done <<'EOF' ## Quote here-doc delimiter to avoid content's expansion
+$(stty -a 2>/dev/null)
+EOF
+}
+uinfo() { #@ DESCRIPTION: Prints details about the current environment into file
+          #@ USAGE: uinfo [ PATH ]
+    # Set/update Dash-environment's missing LINES & COLUMNS using getTrmSze()
+    getTrmSze LINES COLUMNS
+    eval ${1+exec 3>&1 >"\$1"} ## If path specified, redirect STDOUT using file
+                               ## descriptor allowing it to be optional, so that
+                               ## it may be captured w/command substitution:
+                               ## info=$(uinfo)
+        # Display user's sesion information (where available)
+        printf "%12s: %s\n"\
+	       USER "${USER:-No value assigned}"\
+	       PWD  "${PWD:-No value assigned}"\
+	       COLUMNS "${COLUMNS:-No value assigned}"\
+	       LINES "${LINES:-No value assigned}"\
+	       SHELL "${SHELL:-No value assigned}"\
+               HOME "${HOME:-No value assigned}"\
+	       TERM "${TERM:-No value assigned}"
+    eval ${1+exec 1>&3 3>&-}  ## Undo previous redirect if needed
+}
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    # Test uinfo with and without argument
+    printf "Main: Calling \"%s\" without pars..\n" uinfo
+    uinfo
+    printf "Main: Calling \"%s %s\"..\n" uinfo "/tmp/uinfo test"
+    uinfo "/tmp/uinfo test"
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ## Call the main funciton
+##

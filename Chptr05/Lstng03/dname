@@ -1,0 +1,23 @@
+#!/bin/sh
+#: Title       : Bname
+#: Date        : 2016-04-12
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script file
+#:             : Strips the directory name from provided path
+#: Options     : N/A
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    case $1 in
+        */*) ## Does provided path contain any "/" char?
+            printf "%s\n" "${1%/*}" ;;
+        *)   ## Assume that provided path is relative pointing to a file in $PWD
+             ## But if it doesn't exists, print a dot.
+            [ -e "$1" ] && printf "%s\n" "$PWD" || printf ".\n" ;;
+    esac
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ${1+"$1"} ## Call the main funciton
+##

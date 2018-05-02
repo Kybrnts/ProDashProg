@@ -1,0 +1,28 @@
+#!/bin/sh
+#: Title       : Showvar
+#: Date        : 2016-04-12
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script file
+#:             : Exit If Parameters Are Unset Or Empty
+#: Options     : N/A
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    # Check for unset arguments (*)
+    : ${1?An argument is required} \
+      ${2?Two arguments are required}
+    
+    # Check for empty (null string) arguments
+    : ${1:?A non-empty argument is required} \
+      ${2:?Two non-empty arguments are required}
+
+    printf "%s\n" "Thank you."
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ${1+"$1"} ${2+"$2"} ## Call the main funciton w/at most 2 args
+##
+## (*) Note: ":" Is the null command: it's a builtin that does nothing beyond
+##           expanding args. and performing any specified redirections. A zero
+##           exit code is returned.

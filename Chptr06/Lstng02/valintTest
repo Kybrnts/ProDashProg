@@ -1,0 +1,42 @@
+#!/bin/sh
+#: Title       : Isvalidiptest
+#: Date        : 2016-05-15
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script
+#:             : Tests valint() function
+#: Options     : N/A
+##
+## -- Includes -----------------------------------------------------------------
+. "${0%/*}"/valint || exit 1 ## Include functions inside file by sourcing it
+##
+## -- Functions ----------------------------------------------------------------
+dsplyValint() { #@ DESCRIPTION: display a fancy message to showcase valint
+                #@ USAGE: dsplyValint [ INTEGER ]
+    printf "String ${1+\"$1\"} is "
+    valint ${1+"$1"} || printf "NOT "
+    printf "a valid integer\n"
+}
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    local var1 var2
+    var1=string var2=587
+    
+    dsplyValint 9999999          # Valid integer
+    dsplyValint $((7*3))         # INvalid integer
+    dsplyValint 192.168.100.1    # INvalid integer
+    dsplyValint -9999            # Valid 
+    dsplyValint 0.3141592        # INvalid
+    dsplyValint 00025            # Valid
+    dsplyValint "Hello world!"   # INvalid
+    dsplyValint -01              # Valid
+    dsplyValint ""               # Invalid
+    dsplyValint                  # Unset is passed to valint, hence invalid
+    dsplyValint $var1
+    dsplyValint $var2
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ## Call the main funciton
+##

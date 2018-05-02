@@ -1,0 +1,29 @@
+#!/bin/sh
+#: Title       : Readcheck
+#: Date        : 2016-04-06
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script file
+#:             : Prompt for a Number and Check That It Is No Greater Than Ten
+#: Options     : N/A
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    # Local variables ("local" must be function's first statement)
+    local number
+    # Prompt user to enter a number
+    printf "Enter a number not greater than 10: "
+    # Read entered number
+    read number
+    # Check number's value is below 10
+    if [ $number -gt 10 ]; then
+	printf "Error! %d is too big\n" $number >&2
+	return 1
+    else
+	printf "You entered %d\n" $number
+    fi
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ## Call the main funciton
+

@@ -1,0 +1,23 @@
+#!/bin/sh
+#: Title       : Dname
+#: Date        : 2016-04-12
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script file
+#:             : Strips the base name from provided path
+#: Options     : N/A
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    # Get dname from path and then strip it from the beginning of path (*)
+    printf "%s\n" "${1##"$(dname "$1")"/}"
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ${1+"$1"} ## Call the main funciton
+##
+## (*) Note: First parameter expansion gets delayed until command substitution
+##           is replaced by its output, which is quoted to prevent file-globbing
+##           pattern expansion. Innermost quotes are used in subshell. Finally
+##           the first parameter expansion is also quoted before passing it to
+##           printf.

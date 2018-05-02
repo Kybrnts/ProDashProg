@@ -1,0 +1,89 @@
+#!/bin/sh
+#: Title       : Sample
+#: Date        : 2016-05-19
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script
+#:             : Creates a basic web page
+#: Options     : N/A
+##
+## -- Conf. & globals ----------------------------------------------------------
+_RPLY=             ## Read's builtin reply variable
+_TMPLT='<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset=utf-8>
+<title>%s</title>
+<link href="%s" rel="stylesheet">
+</head>
+<body>
+<h1>%s</h1>
+<div id=main>
+ 
+</div>
+</body>
+</html>
+'                  ## Template for page (printf format string)
+_PRGNME=Sample     ## Program's name
+_PRGVRS=1.0.0      ## Program's version
+_DFLTPRMPT=" ==> " ## Default prompt string
+_DFLTITLE=Title    ## Page's title
+_DFLTH1=$_DFLTITLE ## Page's default header
+_DFLTCSS=default   ## CCS file path
+##
+## -- Functions ----------------------------------------------------------------
+setvar() { #@ DESCRIPTION: Sets $1 variable specified by reference, to $2 value.
+           #@ USAGE: setvar NAME [ VALUE ]
+           #@        /!\ - WARNING! - /!\ $1 must be a valid name
+    eval "$1=\${2+\"\$2\"}" ## Without the right side backslash, escaped chars
+                            ## won't be part of assignment
+}
+die() { #@ DESCRIPTION: Print error message and exit with ERRNO code
+        #@ USAGE: die ERRNO MESSAGE ...
+    local error
+    error=$1
+    shift
+    [ "X$1" = X ] || printf "Error! %s\n" "$*" >&2
+    exit $error
+}
+usage() { #@ DESCRIPTION: Print script's usage information
+          #@ USAGE: usage
+    printf "USAGE: %s HTMLFILE\n" "${_PRGNME:-${0##*/}}"
+}
+version() { #@ DESCRIPTION: scrpt's version information
+            #@ USAGE: version
+    printf "%s version %s" "${_PRGNME:-${0##*/}}" "${_PRGVRS:-1.0.0}"
+}
+readline() { #@ DESCRIPTION: Prompt user for string and offer default
+             #@ USAGE: readline NAME PROMPT DEFAULT
+             #@        /!\ - Warning -/!\ $1 MUST be a valid name
+    set -- $1 ${2+"$2${3:+ (Default is $3)}: "} $3
+    printf "%s " "${2:-$_DFLTPRMPT}"
+    IFS= read -r _RPLY
+    setvar $1 "${_RPLY:-$3}"
+}
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    # Local variables ("local" must be function's first statement)
+    local title h1 css
+    [ $# -eq 1 ] || die 1 "Wrong argument" ## Test for at least one arg
+    case $1 in                             ## Check single arg
+        "")                                ## Fail if empty
+            die 2 "Empty argument" ;;
+        -[vV])                             ## Display version if -v or -V
+            version
+            return 0 ;;
+        -[hH])                             ## Display usage if -h or -H
+            usage
+            return 0 ;;
+    esac
+    # Get configuration from user
+    readline title "Page title" "${_DFLTITLE:-Title}" ## Title
+    readline h1 "Main headline" "${_DFLTH1:-Header}"  ## Header
+    readline css "Style sheet file" "${1%.*}.css"     ## CSS file path
+    printf "$_TMPLT" "$title" "$css" "$h1" >"$1"      ## Print page to $1 path
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main "$@"

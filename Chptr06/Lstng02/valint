@@ -1,0 +1,15 @@
+#: Title       : Valint
+#: Date        : 2016-05-15
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Dash shell script function declarations file
+#:             : Check argument for valid integer
+#: Options     : N/A
+##
+## -- Functions ----------------------------------------------------------------
+valint() { #@ DESCRIPTION: Tests if $1 string is a valid integer
+	   #@ USAGE: valint '[ INTEGER ]'
+    case ${1#[\-+]} in             ## Remove leading sign
+        "" | *[!0-9]*) return 1 ;; ## Is null or contains a non-digit char
+    esac                           ## the whole number and nothing but it
+}

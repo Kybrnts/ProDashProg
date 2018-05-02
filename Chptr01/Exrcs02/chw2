@@ -1,0 +1,38 @@
+#!/bin/sh
+#: Title       : Chw
+#: Date        : 2016-04-06
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 2.0.0
+#: Description : Executable Dash shell script file
+#:             : a. Writes a script that creates the "Hello, World!" script file
+#:             :    called "hw"
+#:             : b. Creates it inside $HOME/bp1/bin
+#:             : c. Makes it executable
+#:             : d. And then executes it
+#: Options     : N/A
+##
+## -- External commands required for execution ---------------------------------
+type cat >/dev/null || exit 1 ## Require access to cat command or finish
+type chmod >/dev/null || exit 1 ## Require access to chmod command or finish
+##
+## -- Main func. declaration  --------------------------------------------------
+main() {
+    # Local variables (If local is used, it should appear as the first
+    # statement of a function)
+    local hwcont script code
+    # initialize locals
+    hwcont=$HOME/bin/hw     ## Hw sript's content file
+    script=$HOME/bp1/bin/hw ## Hw destination file
+    code=                   ## Hw code
+    # Get code from content file into code variable
+    code=$(cat $hwcont)
+    # Put code into destination file
+    printf "%s\n" "$code" >$script
+    # Make script executable
+    chmod -v u+x $script
+    # Execute script in current shell's env
+    . $script
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ## Call the main funciton

@@ -1,0 +1,16 @@
+#!/bin/sh
+#: Title       : Hello
+#: Date        : 2016-04-06
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script file
+#:             : Writes greeting message to a name passed through $1
+#: Options     : N/A
+##
+## -- Main func. declaration  --------------------------------------------------
+main() {
+    printf "Hello, %s!\n" "$1" # Output greeting message to specified name
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ${1+"$1"} ## Call the main funciton passing 1st argument if any at all

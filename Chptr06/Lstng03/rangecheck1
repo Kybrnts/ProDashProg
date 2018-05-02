@@ -1,0 +1,77 @@
+#!/bin/sh
+#: Title       : Rangecheck1
+#: Date        : 2016-05-15
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script
+#:             : Put rangecheck() to the test
+#: Options     : N/A
+##
+## -- Includes -----------------------------------------------------------------
+. "${0%/*}/../Lstng02/valint" || exit 1 ## Include valint() declaration
+##
+## -- Globals ------------------------------------------------------------------
+_MIN=10 ## Default min value for range
+_MAX=20 ## Default max value for range
+##
+## -- Functions ----------------------------------------------------------------
+rngchk1() { #@ DESCRIPTION: Tests if $1 integer is whithin range
+            #@ USAGE: rngchk1 INT [ LOW [ HIGH ] ]
+            #@        /!\ Accepts valid integer strings only /!\
+    # Use ARITHMETIC TEST for the test
+    [ $1 -gt ${2:-$_MIN} ] || return 1 ## Use globals when $2 or $3 not present
+    [ $1 -lt ${3:-$_MAX} ] || return 2
+}
+rngchk2() { #@ DESCRIPTION: Tests if $1 integer is whithin range
+            #@ USAGE: rngchk2 INT [ LOW [ HIGH ] ]
+            #@        /!\ Accepts valid integer strings only /!\
+    # Use ARITHMETIC EVALUATION for the test
+    case $(($1 < ${2:-$_MIN})) in
+        0) return 1 ;; ## Convert arithmetic's eval "false" to return code
+    esac
+    case $(($1 > ${2:-$_MAX})) in
+        0) return 2 ;;
+    esac    
+}
+dsplyValint() { #@ DESCRIPTION: display a fancy message to showcase valint
+                #@ USAGE: dsplyValint [ INTEGER ]
+    printf "String ${1+\"$1\"} is "
+    valint ${1+"$1"} || printf "NOT "
+    printf "a valid integer\n"
+}
+dsplyRngChk() { #@ DESCRIPTION: Tests above functions
+                #@ USAGE: dsplyRngChk '[1|2]' [ INTEGER ]
+    printf "rngchk%d \"%s\" tests " $1 "$2"
+    if rngchk$1 "$2"; then
+        printf "true.\n"
+    else
+        printf "false.\n"
+    fi
+}
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    printf -- "----------\n"
+    dsplyValint -73521
+    dsplyRngChk 1 -73521    ## Tests correctly w/both rngchk*() functions
+    dsplyRngChk 2 -73521
+    printf "\n----------\n"
+    dsplyValint -0015       ## Tests correctly but w/SEMANTIC difference:
+    dsplyRngChk 1 -0015     ## This tests for "15 between $MIN and $MAX"
+    dsplyRngChk 2 -0015     ## But this willuse octal 15 instead
+    printf "\n----------\n"
+    dsplyValint 08
+    dsplyRngChk 1 08        ## Tests correclty 
+    dsplyRngChk 2 08        ## Fails because 08 is not a valid octal
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ## Call the main funciton
+##
+## NOTES: 1. It is always a good idea to test for a valid integer string BEFORE
+##           feeding it to functions that expect such strings as arguments.
+##        2. But it is not enough to test for valid integer string before an
+##           ARITHMETIC EVALUATION expression.
+##        3. We can conclude than ARITHMETIC TEST is somewhat more robust, than
+##           ARITHMETIC EVALUATION, however the former may not offer as much
+##           functionalities as the later.

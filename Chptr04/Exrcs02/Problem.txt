@@ -1,0 +1,52 @@
+#: Title       : Problem.txt
+#: Date        : 2016-04-11
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Plain text file
+#:             : Response to Exercise #2 Chapter 4
+#: Options     : N/A
+
+Question: 
+  What potential problem exists with the following snippet?
+
+  year=$( date +%Y )
+  month=$( date +%m )
+  day=$( date +%d )
+  hour=$( date +%H )
+  minute=$( date +%M )
+  second=$( date +%S )
+
+Quotes:
+  1. "Well, it is not exactly the same, because I ran the first command shortly
+     before midnight and the second sortly after"
+  2. "If the command substitution is not quoted, word splitting and pathname
+     expansion are performed on the results."
+
+Answer:
+  Firstly, there seems to be space for improvement, since that way we are
+  issuing date several times to get one single piece of information.
+  In addition, as per above first statement there is a potential issue if above
+  snippet is issued close enough to midnight. For instance, During August 31st
+  snippet may start execution so close enough to midnight that we may be storing
+  variables as this:
+  * year=2016  # Assigned at 12:59:58 PM of Aug, 31st
+  * month=08   # Assigned at 12:59:59
+  * day=01     # Wrongly assigned at 00:00:00 AM of Sep, 1st
+  Where we should have assigned variables as this:
+  * year=2016 month=08 day=31
+  Finally, as per the second statement, an additional potential
+  problem may be the result of undesired subsecuent word splitting and pathname
+  expansion of proposed command substitutions. A better example would be to
+  contrast the execution of the following two sinppets:
+  # echo $( echo './*' )
+  # echo "$( echo './*' )"
+  However since date with specified formats won't return any file globbing
+  patterns we could discard such risk. 
+
+  We recommend using something like this instead:
+  read year month day hour minute second < <(date +'%Y %m %d %H %M %S')
+
+  Or even better
+  read year month day hour minute second <<EOF
+  "$(date +'%Y %m %d %H %M %S')"
+  EOF

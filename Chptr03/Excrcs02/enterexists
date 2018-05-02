@@ -1,0 +1,27 @@
+#!/bin/sh
+#: Title       : Superstring
+#: Date        : 2016-04-08
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script file
+#:             : Prompts user to enter the name of a file. Repeat untill the
+#:             : user enters a file that exists.
+#: Options     : N/A
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    # Local variables ("local" must be function's first statement)
+    local REPLY
+    # Keep prompting until input (or Ctrl+D)
+    while printf "Enter path of an existing file:\n> "
+          read REPLY; do
+        if [ "X$REPLY" != X -a -e "$REPLY" ]; then
+            printf "Entered file exists.\n"
+            break
+        fi
+        printf "Error! Entered file do not exists"
+    done
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ## Call the main funciton

@@ -1,0 +1,87 @@
+#!/bin/sh
+#: Title       : Rangecheck2
+#: Date        : 2016-05-15
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script
+#:             : Safely tests number within range using arithmetic expansion
+#: Options     : N/A
+##
+## -- Globals ------------------------------------------------------------------
+_MIN=10 ## Default min value for range
+_MAX=20 ## Default max value for range
+_RPLY=  ## Read reply storage
+##
+## -- Functions ----------------------------------------------------------------
+## To better understand shell's arithmetic expansion visit 
+##
+aevdec() { #@ DESCRIPTION: Tests if $1 matches a ISO C std decimal constant, as
+           #@              defined in Sec 6.4.4.1, after removing all leading
+           #@              +/- signs. This test allows safe feeding of numeric
+           #@              strings to shell's arithmetic expansion.
+           #@ USAGE: aevdec [ STRING ]
+    case ${1#"${1%%[!\-+]*}"} in             ## Remove all leading +/- signs;
+        "" | [!1-9]* | *[!0-9]*) return 1 ;; ## Test for null or leading zero
+    esac                                     ## or non-digits followed them.
+}
+aevoct() { #@ DESCRIPTION: Tests if $1 matches an ISO C std octal constant, as
+           #@              defined in Sec 6.4.4.1, after removing all leading
+           #@              +/- signs. This test allows safe feeding of numeric
+           #@              strings to shell's arithmetic expansion.
+           #@ USAGE: aevoct [ STRING ]
+    case ${1#"${1%%[!\-+]*}"} in           ## Remove all +/- signs;
+        "" | [!0]* | *[!0-7]*) return 1 ;; ## Test for null or leading non-zero
+    esac                                   ## followed by non-octal digits;
+}
+aevhex() { #@ DESCRIPTION: Tests if $1 matches an ISO C std hex constant, as
+           #@              defined in Sec 6.4.4.1, after removing all leading
+           #@              +/- signs. This test allows safe feeding of numeric
+           #@              strings to shell's arithmetic expansion.
+           #@ USAGE: aevhex [ STRING ]
+    case ${1#"${1%%[!\-+]*}"} in                  ## Remove all +/- signs;
+        [0][Xx]*) case ${1#0[Xx]} in              ## Test for leading 0X or 0x
+                      *[!0-9A-Fa-f]*) return 1 ;; ## and remove them, then
+                  esac ;;                         ## test for non hex digits.
+        *) return 1 ;;
+    esac
+}
+aevint() { #@ DESCRIPTION: Test if $1 matches an ISO C standard integer as
+           #@              required by the Posix shell arithmetic expansion.
+           #@ USAGE: aevint [ STRING ]
+    aevdec ${1+"$1"} || aevoct ${1+"$1"} || aevhex ${1+"$1"} || return 1
+}
+rngchk() { #@ DESCRIPTION: Tests if $1 integer is whithin range
+           #@ USAGE: rngchk2 INT [ LOW [ HIGH ] ]
+           #@        /!\ Warning /!\ - Accepts valid integer strings only
+    # Use ARITHMETIC EVALUATION for the test
+    return $(($1 < ${2:-$_MIN} ? 1 : $1 > ${3:-$_MAX} ? 2 : 0))
+}
+dsplyRngChk() { #@ DESCRIPTION: Tests above functions
+                #@ USAGE: dsplyRngChk [ NUMERIC_STRING ]
+    printf "The number \"%s\" is " $1
+    rngchk "$1"
+    case $? in
+        0) printf "Within range.\n" ;;
+        1) printf "below MIN.\n" ;;
+        2) printf "above MAX.\n" ;;
+    esac
+}
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    # Prompt user to enter a whole number within range
+    printf "%s: " "Enter a whole number between $_MIN and $_MAX inclusive"
+    if ! read _RPLY; then       ## Read from STDIN..
+        printf "\nAborting..\n" ## or fail gracefully when Ctrl+D is pressed
+        return 1                ## Report failure to calling environment
+    fi
+    # Test input
+    if ! aevint "$_RPLY"; then  ## Test for valid int. as per arthmtc. exp.
+        printf "Error! Invalid whole number entered\n" >&2
+        return 2                ## Report failure to calling environment
+    fi
+    dsplyRngChk $_RPLY          ## Now safely test if input within range
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ## Call the main funciton

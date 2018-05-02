@@ -1,0 +1,24 @@
+#!/bin/sh
+#: Title       : Superstring
+#: Date        : 2016-04-06
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script file
+#:             : Does one string contain another?
+#: Options     : N/A
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    case $1 in              ## Does 1 string matches
+        *"$2"*) return 0 ;; ## Second, preceeded or followed by more chars (*)?
+        *) return 1 ;;      ## return success status, otherwise ret error stat
+    esac
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ${1+"$1"} ${2+"$2"} ## Call the main funciton w/at most two args
+##
+## (*) Note: It is necessary to quote $2 prmtr. when used as a case patern since
+##           we don't want characters like '*' or '?' to be expanded. If you
+##           still doubt this, imagine what would happend if we didn't quote $2
+##           and issued the command "./superstring a ?".

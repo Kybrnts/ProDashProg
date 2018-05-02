@@ -1,0 +1,27 @@
+#!/bin/sh
+#: Title       : Secs2dms
+#: Date        : 2016-04-11
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script file
+#:             : Convert seconds in $1 to Days, Hours, Minutes and secs
+#: Options     : N/A
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    # Local variables ("local" must be function's first statement)
+    local seconds secs_in_day secs_in_hour secs_in_min days secs
+    # Initialize some constants
+    secs_in_day=86400 secs_in_hour=3600 mins_in_hour=60 secs_in_min=60
+    
+    days=$(($1/$secs_in_day))
+    secs=$(($1%$secs_in_day))
+    printf "%d:%02d:%02d:%02d\n"\
+           "$days"\
+           "$(($secs/$secs_in_hour))"\
+           "$((($secs/$mins_in_hour)%$mins_in_hour))"\
+           "$(($secs%$secs_in_min))"
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ${1+"$@"} ## Call the main funciton passing all arguments if any at all

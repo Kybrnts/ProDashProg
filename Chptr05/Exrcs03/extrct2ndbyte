@@ -1,0 +1,45 @@
+#!/bin/sh
+#: Title       : Bname
+#: Date        : 2016-04-12
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script file
+#:             : Given var=192.168.0.123, uses parameter expansion to extract
+#:             : the second number, 168.
+#:             : Note: We will asume that $var must consist of four integers
+#:             :       separated by dots, and nothing more.
+#: Options     : N/A
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    # Local variables ("local" must be function's first statement)
+    local num w
+    # Check if var is set in environment, or exit w/return code =1
+    if [ "${var+X}" != X ]; then
+        printf "Error! %s\n" "\"var\" not present in environment" >&2
+        return 1
+    fi
+    # While some '.' is present in $var loop at most 3 times
+    w=0                     ## Initialize loop counter
+    while [ $w -lt 3 ]; do  ## Loop from 0 to 2 (3 times at most)
+        case $var in        ## If input contain dots loop through
+            *.*)
+                num=${var##*[!0-9]} ## Store from rightmost non-digit to end (*)
+                var=${var%."$num"}  ## Remove .$num from the end of $var
+                w=$((w + 1)) ;;     ## Step loop counter
+            ""|*)           ## If var is empty or does not contain a dot stop
+                printf "Error! \$var value is invalid.\n" >&2
+                return 2 ;;
+        esac
+    done
+    case $var in            ## Now require only digits after loop
+        ""|*[!0-9]*)
+            printf "Error! \$var value is invalid.\n" >&2
+            return 2 ;;        
+    esac
+    printf "The second number of \$var is $num\n"
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ## Call the main funciton
+##

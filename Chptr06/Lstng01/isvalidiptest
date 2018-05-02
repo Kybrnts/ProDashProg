@@ -1,0 +1,97 @@
+#!/bin/sh
+#: Title       : Isvalidiptest
+#: Date        : 2016-05-15
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable dash shell script
+#:             : Checks "isvalidip()" function by generating several random ip
+#:             : addresses and then testing if they are valid.
+#: Options     : N/A
+##
+## -- Externals required for execution -----------------------------------------
+type awk >/dev/null || exit 1   ## Pattern scanning and processing language
+type sleep >/dev/null || exit 1 ## Delay execution for some time
+##
+## -- Includes -----------------------------------------------------------------
+. "${0%/*}"/isvalidip || exit 1 ## Include functions inside file by sourcing it
+##
+## -- Configuration & globals  -------------------------------------------------
+_MAXIPS=30 ## Number of IPs to generate and test
+##
+## -- Functions ----------------------------------------------------------------
+setvar() { #@ DESCRIPTION: Sets $1 variable specified by reference, to $2 value.
+           #@ $1 MUST BE A VALID NAME!
+           #@ USAGE: setvar NAME [ VALUE ]
+           #@        /!\ - WARNING! - /!\ $1 must be a valid name
+    eval "$1=\${2+\"\$2\"}" ## Without the right side backslash, escaped chars
+                            ## won't be part of assignment
+}
+getvar() { #@ DESCRIPTION: Gets value of $2 referenced variable and writes it in
+           #@              $1 referenced name. If referenced
+           #@              variable is unset, referenced name will remain unset,
+           #@              and exit status will be 1
+           #@ USAGE: getvar NAMEW NAMER
+           #@        /!\ - WARNING! - /!\ $1 AND $2 must be a valid names
+    eval "[ \"\${$2+X}\" = X ] && $1=\"\${$2}\"" ## Do not set $1 referenced
+                                                 ## name if $2 is also unset
+}
+_SEED= ## Global seed number
+srand() { #@ DESCRIPTION: Initialize the global seed number using an integer
+          #@ USAGE: srand [ SEED ]
+    _SEED=${1:-"$(date +%Y%m%d%H%M%S)"} ## Use current date/time by default
+}
+_RSEQI=0 ## Global random sequence number index
+rand() { #@ DESCRIPTION: Prints a number in the range $2 to $1 using a random
+         #@              number of an already initialized sequence of randoms. 
+         #@              Sequence number index starts in 0, so rand() uses
+         #@              sequence's first number on its first call. Global
+         #@              sequence index is increased upon each call so rand()
+         #@              uses a different random of the sequence each time. Use
+         #@              srand() to initialize the random sequence.
+         #@              $1 is meant to be within 0 to its default of 32767, and
+         #@              min in the range of 0 to $1, using 0 by default.
+         #@ USAGE: rand NAME [ MAX [ MIN ] ]
+         #@        /!\ - WARNING! - /!\ $1 must be a valid name
+    setvar $1 $(awk '
+BEGIN{
+    max='${2:-32767}'; min='${3:-0}'
+    srand('${_SEED:-1}');                    ## Initialize awks random seq
+    for(i = 0; i < '$_RSEQI'; i++)           ## Skip already used randoms
+        rand();
+    print int(min + rand()*(max - min + 1)); ## Transform random before print
+}')                        ## Generate number in subshell using awk
+    _RSEQI=$((_RSEQI + 1)) ## Global index must be increased outside subshell
+}
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    # Local variables ("local" must be function's first statement)
+    local i j ip rnum
+    srand   ## Initialize random sequence using current second as seed
+    sleep 1 ## Wait one second to avoid using same seed on consecutive calls
+    i=0     ## Initialize loop counters
+    # Generate several random ip addresses (in globals)
+    while [ $i -le $_MAXIPS ]; do ## Generate a total of $_MAXIPS
+        j=0 ip=                   ## Initialize current ip string and counter
+        while [ $j -lt 4 ]; do    ## IPs made of four dotted numbers
+            rand rnum 300         ## Generate random with out-of-range chance
+            ip=${ip:+$ip.}$rnum   ## Accumulate random in ip appending a dot
+            j=$((j + 1))          ## Increase inner counter
+        done
+        setvar ip_$i $ip          ## Set global dynamic name w/generated ip
+        i=$((i + 1))              ## Increase outer loop
+    done
+    i=0     ## Reset loop counter
+    while getvar ip ip_$i; do              ## Get next global until the last set
+        if isvalidip $ip; then             ## Use included function to test
+            printf "%15s: valid\n" "$ip"   ## Print valid when test is passed
+        else
+            printf "%15s: invalid\n" "$ip" ## Print invalid when test isn't
+        fi
+        i=$((i + 1))                       ## Increase outer loop counter
+    done
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ## Call the main funciton
+##

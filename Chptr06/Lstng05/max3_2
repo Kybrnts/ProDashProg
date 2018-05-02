@@ -1,0 +1,168 @@
+#!/bin/sh
+#: Title       : Max3_2
+#: Date        : 2016-05-17
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script
+#:             : Sort three integers and write results in variables
+#: Options     : N/A
+##
+## -- Functions ----------------------------------------------------------------
+stdmsg() { #@ DESCRIPTION: Print messages to STDOUT
+           #@ USAGE: stdmsg [ MSG ... ]
+    [ "${1+X}" = X ] && printf "%s\n" "$@"
+}
+errmsg() { #@ DESCRIPTION: Print messages to STDERR prefixed by an error stamp
+           #@ USAGE: stderr [ MSG ... ]
+    stdmsg ${1+"Error! $@"} >&2
+}
+setvar() { #@ DESCRIPTION: Sets $1 variable specified by reference, to $2 value.
+           #@ USAGE: setvar NAME [ VALUE ]
+           #@        /!\ - WARNING! - /!\ $1 must be a valid name
+    eval "$1=\${2+\"\$2\"}" ## Without the right side backslash, escaped chars
+                            ## won't be part of assignment
+}
+getvar() { #@ DESCRIPTION: Stores value of $2 referenced var in $1 name. If $2
+           #@              referenced var. is unset, so $1 name will remain and
+           #@              exit status will be 1.
+           #@ USAGE: getvar NAMEW NAMER
+           #@        /!\ - WARNING! - /!\ $1 AND $2 must be a valid names
+    eval "[ \"\${$2+X}\" = X ] && $1=\"\${$2}\"" ## Do not set $1 referenced
+                                                 ## name if $2 is also unset
+}
+
+aevdec() { #@ DESCRIPTION: Tests if $1 matches a ISO C std decimal constant, as
+           #@              defined in Sec 6.4.4.1, after removing all leading
+           #@              +/- signs. This test allows safe feeding of numeric
+           #@              strings to shell's arithmetic expansion.
+           #@ USAGE: aevdec [ STRING ]
+    case ${1#"${1%%[!\-+]*}"} in             ## Remove all leading +/- signs;
+        "" | [!1-9]* | *[!0-9]*) return 1 ;; ## Test for null or leading zero
+    esac                                     ## or non-digits followed them.
+}
+aevoct() { #@ DESCRIPTION: Tests if $1 matches an ISO C std octal constant, as
+           #@              defined in Sec 6.4.4.1, after removing all leading
+           #@              +/- signs. This test allows safe feeding of numeric
+           #@              strings to shell's arithmetic expansion.
+           #@ USAGE: aevoct [ STRING ]
+    case ${1#"${1%%[!\-+]*}"} in           ## Remove all +/- signs;
+        "" | [!0]* | *[!0-7]*) return 1 ;; ## Test for null or leading non-zero
+    esac                                   ## followed by non-octal digits;
+}
+aevhex() { #@ DESCRIPTION: Tests if $1 matches an ISO C std hex constant, as
+           #@              defined in Sec 6.4.4.1, after removing all leading
+           #@              +/- signs. This test allows safe feeding of numeric
+           #@              strings to shell's arithmetic expansion.
+           #@ USAGE: aevhex [ STRING ]
+    case ${1#"${1%%[!\-+]*}"} in                  ## Remove all +/- signs;
+        [0][Xx]*) case ${1#0[Xx]} in              ## Test for leading 0X or 0x
+                      *[!0-9A-Fa-f]*) return 1 ;; ## and remove them, then
+                  esac ;;                         ## test for non hex digits.
+        *) return 1 ;;
+    esac
+}
+aevint() { #@ DESCRIPTION: Test if $1 matches an ISO C standard integer as
+           #@              required by the Posix shell arithmetic expansion.
+           #@ USAGE: aevint [ STRING ]
+    aevdec ${1+"$1"} || aevoct ${1+"$1"} || aevhex ${1+"$1"} || return 1
+}
+_MAXFAILS=3
+_read3AEValInt() { #@ DESCRIPTION: Reads 3 shell's arithmetic-expansion-valid
+                   #@              ints into $1, $2 & $3 names via setvar(), in
+                   #@              a pass-by-reference fashion.
+                   #@              Because it uses local names, to prevent from
+                   #@              setting a local variable we need to make sure
+                   #@              that they are different from $1, $2 or $3 for
+                   #@              any possible invocation. To do so we will
+                   #@              AVOID using underscore prefixed local names,
+                   #@              and ENFORCE the use of only them for $1, $2
+                   #@              & $3 values. This however makes impossible to
+                   #@              call it from other functions that may try to
+                   #@              use the same logic. To use it without that
+                   #@              limitations we will use below wrapper.
+                   #@ USAGE: _read3AEValInt NAME1 NAME2 NAME3
+                   #@        /!\ - WARNINGS: - /!\
+                   #@        * Any ${N} MUST be a valid name to prevent setvar()
+                   #@          errors. Valid shell name check is recommended on
+                   #@          ${N} if it's set during runtime;
+                   #@        * Any ${N} MUST begin with the underscore (_) char;
+                   #@        * No leading underscore can be allowed for locals;
+                   #@        * DO NOT CALL DIRECTLY, use below wrapper instead.
+    # Local variables ("local" must be function's first statement)
+    local aevi1 aevi2 aevi3 fails
+    fails=0 ## Initialize fails-to-enter numbers counter
+    # Function's main infinite loop
+    while :; do
+        # Keep promping user..
+        printf "%s: " "Enter 3 whole numbers (Ctrl + D aborts)"
+        if ! read  aevi1 aevi2 aevi3; then ## Finish if CTRL+D entereda
+            stdmsg "Aborted!"              ## Let user know about it
+            return 1                       ## And calling environment too
+        fi
+        if aevint "$aevi1" && aevint "$aevi2" && aevint "$aevi3"; then
+            break ## Break loop as soon as correct input is detected
+        else                                    ## Otherwise..
+            errmsg "Invalid whole number read." ## Display error message;
+            fails=$((fails + 1))                ## Increase fails counter.
+        fi
+        if [ $fails -eq ${_MAXFAILS:-3} ]; then     ## If max-allowed fails
+            errmsg "Max read fails number reached." ## Display error message
+            return 2                                ## Let calling env. now
+        fi
+        stdmsg "Please try again."                  ## Not the first prompt
+    done
+    # Store valid read numbers in globals.
+    ## Below _${N} are meant to be defined as local within the calling env. in
+    ## order to effectively transfer the values between this and its wrapper.
+    setvar $1 "$aevi1"; setvar $2 "$aevi2"; setvar $3 "$aevi3"
+}
+read3AEValInt() { #@ DESCRIPTION: Reads 3 shell's arthmetc-exp-valid integers
+                  #@              into $1, $2 & $3 names using _read3AEValInt()
+                  #@              allowing it to be called by any function.
+                  #@ USAGE: read3AEValInt NAME1 NAME2 NAME3
+                  #@        /!\ - WARNINGS: - /!\
+                  #@        * $1, $2 & $3 must be valid names
+    # Local variables ("local" must be function's first statement)
+    local _$1 _$2 _$3 ## Prefix w/underscore received names, to create local
+                      ## temporary vars that can be passed to _read3AEValInt()
+    # Set local variables or finish preserving exit status
+    _read3AEValInt _$1 _$2 _$3 || return $?
+    # Now set referenced variables w/locals
+    getvar $1 _$1; getvar $2 _$2; getvar $3 _$3
+}
+sort3() { #@ DESCRIPTION: Sorts three integers and store in $1, $2 and $3
+          #@              referenced names.
+          #@ USAnGE: sort3 A
+    [ $(($2 > $3)) -eq 1 ] && set -- $1 $3 $2 $4
+    [ $(($3 > $4)) -eq 1 ] && set -- $1 $2 $4 $3
+    [ $(($2 > $3)) -eq 1 ] && set -- $1 $3 $2 $4
+    setvar $1_0 $2; setvar $1_1 $3; setvar $1_2 $4
+}
+dsplySrtd() { #@DESCRIPTION:
+              #@USAGE:
+    local digits format
+    digits=5 format="%5s: %${digits}s\n"
+    printf "$format" Min $1 Mid $2 Max $3
+}
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    # Local variables ("local" must be function's first statement)
+    local int1 int2 int3
+    # Get 3 numbers from user
+    if ! read3AEValInt int1 int2 int3; then
+        stdmsg "Failed to read 3 valid integers"
+        return 1
+    fi
+    # Sort user-provided numbers
+    printf "Sorting entered numbers.."
+    sort3 sorted $int1 $int2 $int3
+    getvar int1 sorted_0; getvar int2 sorted_1; getvar int3 sorted_2
+    sleep 1
+    # Display results
+    printf "OK\nSort results:\n"
+    dsplySrtd $int1 $int2 $int3
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ## Call the main funciton

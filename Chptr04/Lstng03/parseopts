@@ -1,0 +1,57 @@
+#!/bin/sh
+#: Title       : Parseopts
+#: Date        : 2016-04-11
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script file
+#:             : Parse command-line options
+#: Options     : -f: Specifies a file name
+#:             : -v: Be verbose
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    # Local variables ("local" must be function's first statement)
+    local progname verbose filename optstring opt
+    # Program name storage
+    progname=${0##*/} ## Get the name of the script without its path
+    # Argument option values storage
+    verbose=0         ## Is bervose on or off?
+    filename=         ## Specified file path
+    # Getopts parameters
+    optstring=f:v     ## Program's available options
+    opt=              ## Current option storage
+    # Call gtegopts until there are no more options on the cmd line
+    while getopts $optstring opt; do ## Each option is stored in opt
+	case $opt in                 ## Option args are stored in $OPTARG
+	    f) filename=$OPTARG ;;
+	    v) verbose=$((verbose + 1)) ;;
+	    *) return 1 ;;
+	esac
+    done
+    # Remove options form the command line
+    shift $((OPTIND - 1))
+    # Check whether a filename was entered
+    if [ X"$filename" != X ]; then
+        [ $verbose -gt 0 ] &&
+            printf "Filename is %s\n" "$filename"
+    else
+        [ $verbose -gt 0 ] &&
+            printf "Error! No filename entered\n" >&2
+        return 1
+    fi
+    # Check if entered file exists
+    if [ -f "$filename" ]; then
+        [ $verbose -gt 0 ] &&
+            printf "Filename %s found\n" "$filename"
+    else
+        [ $verbose -gt 0 ] &&
+            printf "Error! File, %s, does not exist\n" "$filename" >&2
+        return 2
+    fi
+    # Print remaining args. number when verbose
+    [ $verbose -gt 0 ] &&
+        printf "Remaining argument number is %d\n" "$#"
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ${1+"$@"} ## Call the main funciton passing all arguments if any at all

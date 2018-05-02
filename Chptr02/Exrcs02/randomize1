@@ -1,0 +1,30 @@
+#!/bin/bash
+#: Title       : Randomize
+#: Date        : 2016-04-06
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Bash shell script file
+#:             : Prints formated random numbers to file and to variable
+#: Options     : N/A
+##
+## -- Externals required for execution -----------------------------------------
+type tee >/dev/null || exit 1 ## Reads from STDIN and pass to files and STDOUT
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    # Local variables (If local is used, it should appear as the first
+    # statement of a function)
+    local digits format outputfile outputvar
+    # Initialize locals
+    digits=5                              # Digits per random number to display
+    format=" %${digits}d.%-5${digits}d\n" # Single line output format
+    outputfile=$HOME/randoms              # File to print output
+    # Variable to print output: print formated random numbers
+    outputvar=$(printf "$format" $RANDOM $RANDOM\
+                                 $RANDOM $RANDOM\
+                                 $RANDOM $RANDOM\
+                                 $RANDOM $RANDOM | tee $outputfile)
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ## Call the main funciton

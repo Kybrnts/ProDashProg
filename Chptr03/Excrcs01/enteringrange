@@ -1,0 +1,33 @@
+#!/bin/sh
+#: Title       : Superstring
+#: Date        : 2016-04-08
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script file
+#:             : Asks the user to enter a number between 20 and 30. If the user
+#:             : enters an invalid number or a non-number, ask again. Repeat
+#:             : until a satisfactory number is entered.
+#: Options     : N/A
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    # Local variables ("local" must be function's first statement)
+    local min max REPLY
+    min=20 max=30
+    # Keep prompting user until proper input (or Ctrl+D when read returns 1)
+    while printf "%s: " "Enter an integer between 20 and 30 (Ctrl + D aborts)"
+          read -r REPLY; do ## Read line into REPLY variable (keep backslashes)
+        case $REPLY in      ## Check for nonempty $REPLY and for non nonnumeric
+            ""|*[^0-9]*) ;; ## chars in it
+            *)              ## REPLY is made of numerics only so check range
+                if [ $REPLY -gt $min -a $REPLY -lt $max ]; then
+                    printf "You entered %d\n" $REPLY
+                    break   ## Break when $min < $REPLY < $max
+                fi ;;
+        esac                ## Display error message befor next iteration
+        printf "Error! %s\n" "Bad input." >&2 
+    done
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ## Call the main funciton

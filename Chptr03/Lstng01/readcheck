@@ -1,0 +1,26 @@
+#!/bin/sh
+#: Title       : Readcheck
+#: Date        : 2016-04-06
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script file
+#:             : Read and check input
+#: Options     : N/A
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    # Local variables ("local" must be function's first statement)
+    local name
+    # Prompt user to enter a name
+    printf "Enter a name: "
+    # Read one line of input and store in "name" variable
+    read name
+    # Check if $name content is the null sring
+    if [ "X$name" = "X" ]; then                    ## Does appending $name have
+        printf "Error! %s\n" "No name entered" >&2 ## any effect? if it doesn't
+        return 1                                   ## Send errorm message to 
+    fi                                             ## STDERR and return >0
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ## Call the main funciton

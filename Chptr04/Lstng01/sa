@@ -1,0 +1,21 @@
+#!/bin/sh
+#: Title       : Sa
+#: Date        : 2016-04-08
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script file
+#:             : Display command-line arguments
+#: Options     : N/A
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    # Local variables ("local" must be function's first statement)
+    local pre post
+    # Initialize delimiters
+    pre=: post=: 
+    # Print each argument on a separate line, enclosed by above delimiters
+    printf "$pre%s$post\n" "$@"
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ${1+"$@"} ## Call the main funciton passing all arguments if any at all
