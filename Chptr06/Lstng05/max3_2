@@ -30,56 +30,63 @@ getvar() { #@ DESCRIPTION: Stores value of $2 referenced var in $1 name. If $2
     eval "[ \"\${$2+X}\" = X ] && $1=\"\${$2}\"" ## Do not set $1 referenced
                                                  ## name if $2 is also unset
 }
-
-aevdec() { #@ DESCRIPTION: Tests if $1 matches a ISO C std decimal constant, as
-           #@              defined in Sec 6.4.4.1, after removing all leading
-           #@              +/- signs. This test allows safe feeding of numeric
-           #@              strings to shell's arithmetic expansion.
-           #@ USAGE: aevdec [ STRING ]
-    case ${1#"${1%%[!\-+]*}"} in             ## Remove all leading +/- signs;
-        "" | [!1-9]* | *[!0-9]*) return 1 ;; ## Test for null or leading zero
-    esac                                     ## or non-digits followed them.
+isodec() { #@ DESCRIPTION: Tests if $1 matches a ISO C std decimal constant, as
+           #@              defined in Sec 6.4.4.1. Needed for safe feeding of
+           #@              decimal strings to shell's arithmetic expansion.
+           #@ USAGE: isodec [ STRING ]
+    case $1 in
+        "" | [!1-9]* | *[!0-9]*) return 1 ;; ## Require one nonzero-digit
+    esac                                     ## followed by dec-constant digit
 }
-aevoct() { #@ DESCRIPTION: Tests if $1 matches an ISO C std octal constant, as
-           #@              defined in Sec 6.4.4.1, after removing all leading
-           #@              +/- signs. This test allows safe feeding of numeric
-           #@              strings to shell's arithmetic expansion.
-           #@ USAGE: aevoct [ STRING ]
-    case ${1#"${1%%[!\-+]*}"} in           ## Remove all +/- signs;
-        "" | [!0]* | *[!0-7]*) return 1 ;; ## Test for null or leading non-zero
-    esac                                   ## followed by non-octal digits;
+isooct() { #@ DESCRIPTION: Tests if $1 matches an ISO C std octal constant, as
+           #@              defined in Sec 6.4.4.1. Needed for safe feeding of
+           #@              octal strings to shell's arithmetic expansion.
+           #@ USAGE: isooct [ STRING ]
+    case $1 in
+        "" | [!0]* | *[!0-7]*) return 1 ;; ## Require a leading zero followed by
+    esac                                   ## oct-constant oct-digit
 }
-aevhex() { #@ DESCRIPTION: Tests if $1 matches an ISO C std hex constant, as
-           #@              defined in Sec 6.4.4.1, after removing all leading
-           #@              +/- signs. This test allows safe feeding of numeric
-           #@              strings to shell's arithmetic expansion.
-           #@ USAGE: aevhex [ STRING ]
-    case ${1#"${1%%[!\-+]*}"} in                  ## Remove all +/- signs;
-        [0][Xx]*) case ${1#0[Xx]} in              ## Test for leading 0X or 0x
-                      *[!0-9A-Fa-f]*) return 1 ;; ## and remove them, then
-                  esac ;;                         ## test for non hex digits.
+isohex() { #@ DESCRIPTION: Tests if $1 matches an ISO C std hex constant, as
+           #@              defined in Sec 6.4.4.1. Needed for safe feeding of
+           #@              hexadecimal strings to shell's arithmetic expansion.
+           #@ USAGE: isohex [ STRING ]
+    case $1 in
+        [0][Xx]*) case ${1#0[Xx]} in              ## Start by extracting
+                      *[!0-9A-Fa-f]*) return 1 ;; ## hex-prefix and then require
+                  esac ;;                         ## a hex-constant hex-digit
         *) return 1 ;;
     esac
+}
+unsgn() { #@ DESCRIPTION:
+          #@ USAGE: unsgn NAME [ STRING ]
+          #@        /!\ - WARNING! - /!\ $1 must be a valid name
+    setvar $1 "${2#"${2%%[!-+]*}"}" ## 1. keep +/- only chars by removing any
+                                    ##    any other char from $2 back;
+                                    ## 2. Remove kept signs from $2 front.
+    ## Quoting 1st parm expansion is needed to prevent pathname expansion.
 }
 aevint() { #@ DESCRIPTION: Test if $1 matches an ISO C standard integer as
            #@              required by the Posix shell arithmetic expansion.
            #@ USAGE: aevint [ STRING ]
-    aevdec ${1+"$1"} || aevoct ${1+"$1"} || aevhex ${1+"$1"} || return 1
+    # Local variables ("local" must be function's first statement)
+    local u      ## Unsigned integer
+    unsgn u "$1" ## Remove any leading +/- sign
+    isodec "$u" || isohex "$u" || isooct "$u" || return 1
 }
 _MAXFAILS=3
 _read3AEValInt() { #@ DESCRIPTION: Reads 3 shell's arithmetic-expansion-valid
                    #@              ints into $1, $2 & $3 names via setvar(), in
                    #@              a pass-by-reference fashion.
-                   #@              Because it uses local names, to prevent from
-                   #@              setting a local variable we need to make sure
-                   #@              that they are different from $1, $2 or $3 for
-                   #@              any possible invocation. To do so we will
-                   #@              AVOID using underscore prefixed local names,
-                   #@              and ENFORCE the use of only them for $1, $2
-                   #@              & $3 values. This however makes impossible to
-                   #@              call it from other functions that may try to
-                   #@              use the same logic. To use it without that
-                   #@              limitations we will use below wrapper.
+                   #@              Because it uses local vars, to prevent from
+                   #@              setting a local one we need to make sure that
+                   #@              they are different from $1, $2 or $3 for any
+                   #@              possible invocation. To do so we will AVOID
+                   #@              using underscore prefixed local names AND
+                   #@              ENFORCE the use of only them for $1, $2 & $3
+                   #@              values. This however makes impossible to call
+                   #@              it from other functions that may try to use
+                   #@              the same logic. To remove such limitation we
+                   #@              introduce below wrapper.
                    #@ USAGE: _read3AEValInt NAME1 NAME2 NAME3
                    #@        /!\ - WARNINGS: - /!\
                    #@        * Any ${N} MUST be a valid name to prevent setvar()
@@ -122,6 +129,7 @@ read3AEValInt() { #@ DESCRIPTION: Reads 3 shell's arthmetc-exp-valid integers
                   #@ USAGE: read3AEValInt NAME1 NAME2 NAME3
                   #@        /!\ - WARNINGS: - /!\
                   #@        * $1, $2 & $3 must be valid names
+                  #@        * Only _${N} Are allowed to be locals
     # Local variables ("local" must be function's first statement)
     local _$1 _$2 _$3 ## Prefix w/underscore received names, to create local
                       ## temporary vars that can be passed to _read3AEValInt()
@@ -132,7 +140,7 @@ read3AEValInt() { #@ DESCRIPTION: Reads 3 shell's arthmetc-exp-valid integers
 }
 sort3() { #@ DESCRIPTION: Sorts three integers and store in $1, $2 and $3
           #@              referenced names.
-          #@ USAnGE: sort3 A
+          #@ USAnGE: sort3 ARRAYNAME INT1 INT2 INT3
     [ $(($2 > $3)) -eq 1 ] && set -- $1 $3 $2 $4
     [ $(($3 > $4)) -eq 1 ] && set -- $1 $2 $4 $3
     [ $(($2 > $3)) -eq 1 ] && set -- $1 $3 $2 $4

@@ -24,7 +24,7 @@ _TMPLT='<!DOCTYPE html>
 </body>
 </html>
 '                  ## Template for page (printf format string)
-_PRGNME=Sample     ## Program's name
+_PRGNME=sample     ## Program's name
 _PRGVRS=1.0.0      ## Program's version
 _DFLTPRMPT=" ==> " ## Default prompt string
 _DFLTITLE=Title    ## Page's title
@@ -52,7 +52,7 @@ usage() { #@ DESCRIPTION: Print script's usage information
 }
 version() { #@ DESCRIPTION: scrpt's version information
             #@ USAGE: version
-    printf "%s version %s" "${_PRGNME:-${0##*/}}" "${_PRGVRS:-1.0.0}"
+    printf "%s version %s\n" "${_PRGNME:-${0##*/}}" "${_PRGVRS:-1.0.0}"
 }
 readline() { #@ DESCRIPTION: Prompt user for string and offer default
              #@ USAGE: readline NAME PROMPT DEFAULT
