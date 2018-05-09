@@ -5,7 +5,8 @@
 #: Version     : 1.0.0
 #: Description : Executable Dash shell script
 #:             : Creates a basic web page
-#: Options     : N/A
+#: Options     : -v, Displays version;
+#:             : -h, Displays
 ##
 ## -- Conf. & globals ----------------------------------------------------------
 _RPLY=             ## Read's builtin reply variable
@@ -86,4 +87,4 @@ main() {
 }
 ##
 ## -- Run! ---------------------------------------------------------------------
-main "$@"
+main ${1+"$@"} ## Call main, passing any pos. pars. to it, if any at all.

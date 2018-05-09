@@ -1,0 +1,67 @@
+#!/bin/sh
+#: Title       : Sample
+#: Date        : 2016-05-19
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script
+#:             : Check arg for valid dotted-quad IP address using par. exp.
+#: Options     : N/A
+##
+## -- Functions ----------------------------------------------------------------
+stdmsg() { #@ DESCRIPTION: Print messages to STDOUT
+           #@ USAGE: stdmsg [ MSG ... ]
+    [ "${1+X}" = X ] && printf "%s\n" "$@"
+}
+errmsg() { #@ DESCRIPTION: Print messages to STDERR prefixed by an error stamp
+           #@ USAGE: stderr [ MSG ... ]
+    stdmsg ${1+"Error! $@"} >&2
+}
+usage() { #@ DESCRIPTION:
+          #@ USAGE:
+    printf "USAGE: %s '[ STRING ]'\n" "${0##*/}"
+}
+ipv4oct() { #@ DESCRIPTION:
+            #@ USAGE: ipv4octt [ STRING ]
+    case $1 in
+        0) return 0 ;;
+        "" | [!1-9]* | *[!0-9]*) return 1 ;; 
+    esac
+    [ $1 -lt 256 ]
+}
+ipv4() { #@ DESCRIPTION: 
+         #@ USAGE: vipv4 [ STRING ]
+    # Local variables ("local" must be function's first statement)
+    local w=3
+    while ! ipv4oct "$1" ; do
+        ipv4oct "${1##*.}" || return 1
+    set -- "${1%.*}"
+    w=$((w - 1))
+    done
+    [ $w -eq 0 ]
+}
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    if [ $# -lt 1 ]; then
+        errmsg "An arg is required"
+        return 1
+    fi
+    case $1 in
+        "")
+            errmsg "Empty argument"
+            return 1 ;;
+        -h)
+            usage
+            return 0 ;;
+        --)
+            shift
+            ipv4 ${1+"$@"} ;;
+        *)
+            ipv4 "$@"
+        ;;
+    esac
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ${1+"$@"} ## Call the main funciton
+##

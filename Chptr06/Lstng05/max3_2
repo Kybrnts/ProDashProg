@@ -57,21 +57,15 @@ isohex() { #@ DESCRIPTION: Tests if $1 matches an ISO C std hex constant, as
         *) return 1 ;;
     esac
 }
-unsgn() { #@ DESCRIPTION:
-          #@ USAGE: unsgn NAME [ STRING ]
-          #@        /!\ - WARNING! - /!\ $1 must be a valid name
-    setvar $1 "${2#"${2%%[!-+]*}"}" ## 1. keep +/- only chars by removing any
-                                    ##    any other char from $2 back;
-                                    ## 2. Remove kept signs from $2 front.
-    ## Quoting 1st parm expansion is needed to prevent pathname expansion.
-}
 aevint() { #@ DESCRIPTION: Test if $1 matches an ISO C standard integer as
            #@              required by the Posix shell arithmetic expansion.
            #@ USAGE: aevint [ STRING ]
-    # Local variables ("local" must be function's first statement)
-    local u      ## Unsigned integer
-    unsgn u "$1" ## Remove any leading +/- sign
-    isodec "$u" || isohex "$u" || isooct "$u" || return 1
+    # Start by removing any leading +/- chars from $1
+    set -- "${1#"${1%%[!-+]*}"}" ## 1. keep +/- only chars by removing any other
+                                 ##    char from $2 back;
+                                 ## 2. Remove kept signs from $2 front.
+    # Validate if valid if valid isodec, hex or oct
+    isodec "$1" || isohex "$1" || isooct "$1"
 }
 _MAXFAILS=3
 _read3AEValInt() { #@ DESCRIPTION: Reads 3 shell's arithmetic-expansion-valid
@@ -138,8 +132,8 @@ read3AEValInt() { #@ DESCRIPTION: Reads 3 shell's arthmetc-exp-valid integers
     # Now set referenced variables w/locals
     getvar $1 _$1; getvar $2 _$2; getvar $3 _$3
 }
-sort3() { #@ DESCRIPTION: Sorts three integers and store in $1, $2 and $3
-          #@              referenced names.
+sort3() { #@ DESCRIPTION: Sorts three integers using shell's arithmetic exp. and
+          #@              store in $1 referenced array elements.
           #@ USAnGE: sort3 ARRAYNAME INT1 INT2 INT3
     [ $(($2 > $3)) -eq 1 ] && set -- $1 $3 $2 $4
     [ $(($3 > $4)) -eq 1 ] && set -- $1 $2 $4 $3
