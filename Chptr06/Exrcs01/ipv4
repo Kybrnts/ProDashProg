@@ -16,49 +16,68 @@ errmsg() { #@ DESCRIPTION: Print messages to STDERR prefixed by an error stamp
            #@ USAGE: stderr [ MSG ... ]
     stdmsg ${1+"Error! $@"} >&2
 }
-usage() { #@ DESCRIPTION:
-          #@ USAGE:
+usage() { #@ DESCRIPTION: Displays ussage message for current program
+          #@ USAGE: usage 
     printf "USAGE: %s '[ STRING ]'\n" "${0##*/}"
 }
-ipv4oct() { #@ DESCRIPTION:
+ipv4oct() { #@ DESCRIPTION: Tests if $1 is a valid ipv4 octet
             #@ USAGE: ipv4octt [ STRING ]
     case $1 in
-        0) return 0 ;;
-        "" | [!1-9]* | *[!0-9]*) return 1 ;; 
-    esac
-    [ $1 -lt 256 ]
+        0) return 0 ;;                       ## Single 0 digit is valid
+        "" | [!1-9]* | *[!0-9]*) return 1 ;; ## Else fail if not valid decimal
+    esac                                     ## constant
+    [ $1 -lt 256 ]                           ## Also test range
 }
-ipv4() { #@ DESCRIPTION: 
+ipv4() { #@ DESCRIPTION: Cheks for valid IP address at $1
          #@ USAGE: vipv4 [ STRING ]
     # Local variables ("local" must be function's first statement)
-    local w=3
-    while ! ipv4oct "$1" ; do
-        ipv4oct "${1##*.}" || return 1
-    set -- "${1%.*}"
-    w=$((w - 1))
-    done
-    [ $w -eq 0 ]
+    local w=0                          ## Start octets counter at 3
+    # Loop through ipv4 octets from right to left using dots as separators and
+    # the rightmost one for the stop-processing condition (also use counter).
+    while ! ipv4oct "$1" && [ $w -lt 4 ]; do
+        ipv4oct "${1##*.}" || return 1 ## Extract last octet and thest or fail
+    set -- "${1%.*}"                   ## Remove dot + last octet from $1
+    w=$((w + 1))                       ## decrease octets counter
+    done                               ## Leftmost octet is never removed
+    [ $w -eq 3 ]                       ## Require 3 ipv4oct valid tests
 }
 ##
 ## -- Main ---------------------------------------------------------------------
-main() {
-    if [ $# -lt 1 ]; then
-        errmsg "An arg is required"
-        return 1
-    fi
+main() { #@ DESCRIPTION: Wrapper for ipv4()
+         #@ USAGE: main [ -h | STRING ]
     case $1 in
-        "")
-            errmsg "Empty argument"
+        "")                 # Check for null or empty argument
+            errmsg "An arg is required"
             return 1 ;;
-        -h)
-            usage
-            return 0 ;;
-        --)
-            shift
-            ipv4 ${1+"$@"} ;;
-        *)
-            ipv4 "$@"
-        ;;
+        -*) case ${1#-} in  # Is this an option argument?
+                -)          # Is this the last option?
+                    shift                 ## Shift args leftwise one place
+                    if [ $# -gt 1 ]; then ## Require single 1 non-opt arg
+                        errmsg "Too many args"
+                        return 1 
+                    fi
+                    case $1 in            ## Now check last arg
+                        "")               ## It must be present
+                            errmsg "An arg is required"
+                            return 1 ;;
+                        *)                ## Now test it w/ipv4()
+                            if ! ipv4 "$1"; then
+                                stdmsg "Invalid IPv4 addr"
+                                return 1
+                            fi
+                            stdmsg "Valid IPv4 addr" ;;
+                    esac ;;
+                h) usage ;; # Is this the help option?
+                *)          # Unsupported option?
+                    errmsg "Invalid option"
+                    return 1 ;;
+            esac ;;
+        *)                  # Is this a non option argument?
+            if [ $# -gt 1 ]; then         ## Allow only 1 arg
+                errmsg "Too many arguments"
+                return 1
+            fi
+            main -- "$1"                  ## Self call w/ last option flag
     esac
 }
 ##
