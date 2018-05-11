@@ -9,6 +9,7 @@
 ##
 ## -- Externals required for execution -----------------------------------------
 type awk >/dev/null || exit 1   ## Pattern scanning and processing language
+type date >/dev/null || exit 1  ## Get system's time
 type sleep >/dev/null || exit 1 ## Delay execution for some time
 ##
 ## -- Functions ----------------------------------------------------------------
@@ -19,12 +20,13 @@ setvar() { #@ DESCRIPTION: Sets $1 variable specified by reference, to $2 value.
     eval "$1=\${2+\"\$2\"}" ## Without the right side backslash, escaped chars
                             ## won't be part of assignment
 }
-_RSEED= ## Global seed number
+_RSEED=1 ## Global seed number
+_RSEQI=0 ## Global random sequence number index
 srand() { #@ DESCRIPTION: Initialize the global seed number using an integer
           #@ USAGE: srand [ SEED ]
     _RSEED=${1:-"$(date +%Y%m%d%H%M%S)"} ## Use current date/time by default
+    _RSEQI=0                             ## Reset sequence index
 }
-_RSEQI=0 ## Global random sequence number index
 rand() { #@ DESCRIPTION: Prints a number in the range $2 to $1 using a random
          #@              number of an already initialized sequence of randoms. 
          #@              Sequence number index starts in 0, so rand() uses

@@ -1,17 +1,17 @@
 #!/bin/sh
-#: Title       : Max3_1
+#: Title       : Nameutils
 #: Date        : 2016-05-17
 #: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
 #: Version     : 1.0.0
 #: Description : Dash function declarations file
-#:             : Adds usefull shell tools to handle names and variables
+#:             : Provides usefull tools to handle names and variables
 #: Options     : N/A
 ##
 ## Declarations
-if [ "X$_DEF_NMEUTILS" = X ]; then ## Do not include if already included
-    readonly _DEF_NMEUTILS=:       ## Already included test flag
+if [ "X$_SRC_NMEUTILS" = X ]; then ## Do not include if already included
+    readonly _SRC_NMEUTILS=:       ## Already sourced (included) test flag
 ##
-## Function declarations -------------------------------------------------------------------------------------------
+## Function declarations -------------------------------------------------------
 vnme() { #@ DESCRIPTION: Tests if $1 string is a valid variable shell name.
          #@ USAGE: vname [ NAME ]
     case $1 in                       ## Return > 0 when provided string:
@@ -43,11 +43,11 @@ getvar() { #@ DESCRIPTION: Stores value of $2 referenced var in $1 name. If $2
 }
 ingvar() { #@ DESCRIPTION: Stores the value of variable indirectly referenced
            #@              by name $2 in $1 (i.e. $2 name stored value). If $2
-           #@              name is unset or contained name is also unset so $1
-           #@              will remain and also will exit with 1 status.
-           #@ USAGE: ingvar NAMEW NAMER    
-    getvar $1 $2 || return 1
-    eval "vname \"\$$1\"" || return 2
-    eval "getvar $1 \$$2" || return 3
+           #@              name contains an invalid name, or that name is unset,
+           #@              $1 will remain and also will exit with >0 status.
+           #@ USAGE: ingvar NAMEW NAMER
+           #@        /!\ - WARNING! - /!\ $1 AND $2 must be a valid names
+    eval "vnme \"\$$2\"" || return 2  ## Test if $2 name contains a valid one
+    eval "getvar $1 \$$2" || return 3 ## Assign above's value to write name
 }
 fi

@@ -1,0 +1,101 @@
+#!/bin/sh
+#: Title       : Mathutils
+#: Date        : 2016-05-17
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Dash function declarations file
+#:             : Adds usefull math tools to the shell that sources it
+#: Options     : N/A
+##
+## -- Includes -----------------------------------------------------------------
+. "${0%/*}"/nameutils || exit 1 ## Include nmeutils functions
+##
+## Declarations
+if [ "X$_SRC_MTHUTILS" = X ]; then ## Do not include if already included
+    readonly _SRC_MTHUTILS=:       ## Already sourced (included) test flag
+##
+## Function declarations -------------------------------------------------------
+isodec() { #@ DESCRIPTION: Tests if $1 matches a ISO C std decimal constant, as
+           #@              defined in Sec 6.4.4.1. Needed for safe feeding of
+           #@              decimal strings to shell's arithmetic expansion.
+           #@ USAGE: isodec [ STRING ]
+    case $1 in
+        "" | [!1-9]* | *[!0-9]*) return 1 ;; ## Require one nonzero-digit
+    esac                                     ## followed by dec-constant digit
+}
+isooct() { #@ DESCRIPTION: Tests if $1 matches an ISO C std octal constant, as
+           #@              defined in Sec 6.4.4.1. Needed for safe feeding of
+           #@              octal strings to shell's arithmetic expansion.
+           #@ USAGE: isooct [ STRING ]
+    case $1 in
+        "" | [!0]* | *[!0-7]*) return 1 ;; ## Require a leading zero followed by
+    esac                                   ## oct-constant oct-digit
+}
+isohex() { #@ DESCRIPTION: Tests if $1 matches an ISO C std hex constant, as
+           #@              defined in Sec 6.4.4.1. Needed for safe feeding of
+           #@              hexadecimal strings to shell's arithmetic expansion.
+           #@ USAGE: isohex [ STRING ]
+    case $1 in
+        [0][Xx]*) case ${1#0[Xx]} in              ## Start by extracting
+                      *[!0-9A-Fa-f]*) return 1 ;; ## hex-prefix and then require
+                  esac ;;                         ## a hex-constant hex-digit
+        *) return 1 ;;
+    esac
+}
+aevint() { #@ DESCRIPTION: Test if $1 matches an ISO C standard integer as
+           #@              required by the Posix shell arithmetic expansion.
+           #@ USAGE: aevint [ STRING ]
+    # Start by removing any leading +/- chars from $1
+    set -- "${1#"${1%%[!-+]*}"}" ## 1. keep +/- only chars by removing any other
+                                 ##    char from $2 back;
+                                 ## 2. Remove kept signs from $2 front.
+    # Validate if valid if valid isodec, hex or oct
+    isodec "$1" || isohex "$1" || isooct "$1"
+}
+unsgn() { #@ DESCRIPTION:
+          #@ USAGE:
+    setvar $1 "${2#"${2%%[!-+]*}"}"
+}
+if type awk date >/dev/null 2>&1; then
+_RNDSEED=1 ## Global seed number
+_RNDSEQI=0 ## Global random sequence number index
+srand() { #@ DESCRIPTION: Initialize the global seed number using an integer
+          #@ USAGE: srand [ SEED ]
+    _RNDSEED=${1:-"$(date +%Y%m%d%H%M%S)"} ## Use current date/time by default
+    _RNDSEQI=0                             ## Reset sequence index
+}
+rand() { #@ DESCRIPTION: Prints a number in the range $2 to $1 using a random
+         #@              number of an already initialized sequence of randoms. 
+         #@              Sequence number index starts in 0, so rand() uses
+         #@              sequence's first number on its first call. Global
+         #@              sequence index is increased upon each call so rand()
+         #@              uses a different random of the sequence each time. Use
+         #@              srand() to initialize the random sequence.
+         #@              $1 is meant to be within 0 to its default of 32767, and
+         #@              min in the range of 0 to $1, using 0 by default.
+         #@ USAGE: rand NAME [ MAX [ MIN ] ]
+         #@        /!\ - WARNING! - /!\ $1 must be a valid name
+    setvar $1 $(awk '
+BEGIN{
+    max='${2:-32767}'; min='${3:-0}'
+    srand('${_RNDSEED:-1}');                   ## Initialize awks random seq
+    for(i = 0; i < '$_RNDSEQI'; i++)           ## Skip already used randoms
+        rand();
+    print int(min + rand()*(max - min + 1)); ## Transform random before print
+}')                            ## Generate number in subshell using awk
+    _RNDSEQI=$((_RNDSEQI + 1)) ## Glbl index must be increased outside subshell
+}
+fi
+incSrtN() {
+    :
+}
+decSrtN() {
+    :
+}
+decSrtA() {
+    :
+}
+decSrtA() {
+    :
+}
+fi
