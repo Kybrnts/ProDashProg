@@ -47,8 +47,8 @@ aevint() { #@ DESCRIPTION: Test if $1 matches an ISO C standard integer as
            #@ USAGE: aevint [ STRING ]
     # Start by removing any leading +/- chars from $1
     set -- "${1#"${1%%[!-+]*}"}" ## 1. keep +/- only chars by removing any other
-                                 ##    char from $2 back;
-                                 ## 2. Remove kept signs from $2 front.
+                                 ##    char from $1 back;
+                                 ## 2. Remove kept signs from $1 front.
     # Validate if valid if valid isodec, hex or oct
     isodec "$1" || isohex "$1" || isooct "$1"
 }
@@ -86,8 +86,14 @@ BEGIN{
     _RNDSEQI=$((_RNDSEQI + 1)) ## Glbl index must be increased outside subshell
 }
 fi
-incSrtN() {
-    :
+incSrtN() { #@ DESCRIPTION:
+            #@ USAGE: incSrtN ARRAYNAME INT [ INT .. ]
+    local anme=$1 i 
+    shift
+    while :; do
+        
+        shift || break
+    done
 }
 decSrtN() {
     :

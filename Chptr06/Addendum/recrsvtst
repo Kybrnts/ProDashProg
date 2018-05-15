@@ -1,0 +1,73 @@
+#!/bin/sh
+#: Title       : Recrsvtst
+#: Date        : 2016-05-17
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable dash script file
+#:             : Recursive functions test
+#: Options     : N/A
+##
+## -- Includes -----------------------------------------------------------------
+. "${0%/*}"/nameutils || exit 1 ## Include nmeutils functions
+##
+## Function declarations -------------------------------------------------------
+sum() { #@ DESCRIPTION:
+        #@ USAGE: sum NAME NONEGINT1 NONEGINT2
+    if [ $(($3 < 1)) -eq 1 ]; then ## Recursion base case: sum = m + 0 = m
+        setvar $1 $2
+    else                           ## Any recurson case will continew below:
+        sum $1 $2 $(($3 - 1))      ## Sum = m + (n + 1) = (m + n) + 1
+        eval "setvar $1 \$((\$$1 + 1))"
+    fi   
+}
+prd() { #@ DESCRIPTION:
+        #@ USAGE: sum NAME NONEGINT1 NONEGINT2
+    if [ $(($2 < 1 || $3 < 1)) -eq 1 ]; then ## Rec. 1st base case: prod = m*0=0
+        setvar $1 0
+    elif [ $(($3 < 2)) -eq 1 ]; then         ## Rec. 2nd base case: prod = m*1=m
+        setvar $1 $2
+    else                                     ## Other: prod = m*(n+1) = m*n + m
+        prd $1 $2 $(($3 - 1))
+        eval "sum $1 \$$1 \$2"
+    fi
+}
+_fib() { #@ DESCRIPTION:
+         #@ USAGE: _fib NAME NONEGINT
+    # Local variables ("local" must be function's first statement)
+    local tmp
+    if [ $(($2 < 2)) -eq 1 ]; then
+        setvar $1 1
+    else
+        _fib $1 $(($2 - 2))
+        getvar tmp $1
+        _fib $1 $(($2 - 1))
+        eval "sum $1 \$tmp \$$1"
+    fi
+}
+fib() { #@ DESCRIPTION:
+        #@ USAGE: fib [ _fib() args.. ]
+    # Local variables ("local" must be function's first statement)
+    local _$1
+    _fib _$1 $2
+    getvar $1 _$1
+}
+ackr() { #@ DESCRIPTION:
+         #@ USAGE: _ack NAME NONEGINT1 NONEGINT2
+    if [ $(($2 < 1)) -eq 1 ]; then
+        sum $1 $3 1
+    elif [ $(($3 < 1)) -eq 1 ]; thenfct
+        ackr $1 $(($2 - 1)) 1
+    else
+        ackr $1 $2 $(($3 - 1))
+        eval "ackr $1 \$((\$2 - 1)) \$$1"
+    fi
+}
+fct() { #@ DESCRIPTION:
+        #@ USAGE: fact NAME NONEGINT
+    if [ $(($2 < 1)) -eq 1 ]; then
+        setvar $1 1
+    else
+        fct $1 $(($2 - 1))
+        eval "prd $1 \$$1 \$2"
+    fi
+}
