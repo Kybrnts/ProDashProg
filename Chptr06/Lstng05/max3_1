@@ -58,6 +58,7 @@ sort3() { #@ DESCRIPTION: Sorts three integers using shell's test command and
 }                                             ## referenced variables.
 dsplySrtd() { #@DESCRIPTION: Displays 3 already sorted integers
               #@USAGE:
+    # Local variables ("local" must be function's first statement)
     local digits format
     digits=5 format="%5s: %${digits}s\n"
     printf "$format" Min $1 Mid $2 Max $3

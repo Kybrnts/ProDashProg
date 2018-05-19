@@ -1,0 +1,19 @@
+_wqargs() { #@ DESCRIPTION:
+            #@ USAGE: wqpprs [ ARG1 [ ARG2 .. ] ] NAME
+    # Local variables ("local" must be function's first statement)
+    local qtd
+    while [ $# -gt 1 ]; do
+        eval "getvar qtd \$$#"
+        eval "setvar \$$# \${qtd:+\"\$qtd \"}\\\"\"\$1\"\\\""
+        shift
+    done
+}
+wqargs() { #@ DESCRIPTION:
+           #@ USAGE: NAME [ ARG1 [ ARG2 .. ] ]
+    local _$1
+    unset $1
+    set -- "$@" _$1
+    shift
+    _wqargs "$@"
+    eval "getvar \${$##_} \$$#"
+}
