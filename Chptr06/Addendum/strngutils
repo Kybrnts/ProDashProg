@@ -1,19 +1,68 @@
-_wqargs() { #@ DESCRIPTION:
-            #@ USAGE: wqpprs [ ARG1 [ ARG2 .. ] ] NAME
+#!/bin/sh
+#: Title       : Strngutils
+#: Date        : 2016-05-17
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Dash function declarations file
+#:             : Adds usefull string test and manipulation tools
+#: Options     : N/A
+##
+## Includes
+. 
+##
+## Declarations
+if [ "X$_SRC_STRNGUTILS" = X ]; then ## Do not include if already included
+    readonly _SRC_STRNGUTILS=:       ## Already sourced (included) test flag
+
+iswrd() { #@ DESCRIPTION: Tests if $1 string is a word (i.e. doesn't contain
+          #@              any $IFS chars.
+          #@ USAGE: iswrd '[ STRING ]'
+    case $1 in                  ## Test if $1 string contains one of $IFS chars
+        *["$IFS"]*) return 1 ;; ## If it does, return 1
+    esac
+}
+isnul() { #@ DESCRIPTION: Tests if $1 contains a null string (i.e. just \0 char)
+          #@ USAGE: isnul [ STRING ]
+    [ X"$1" = X ] ## Fails when $1 is concatenation neutral
+}
+sbstr() { #@ DESCRIPTION: Tests if $1 string is a substring of $2
+          #@ USAGE: sbstr [ STR1 [ STR2 ] ]
+    case $2 in              ## Does $1 string matches
+        *"$1"*) return 0 ;; ## Second, preceeded or followed by more chars (*)?
+    esac                    ## Prevent expansion of * or ? by quoting $1
+    return 1                ## return success status, otherwise ret error stat
+}
+sapnd() { #@ DESCRIPTION:
+          #@ USAGE: sapnd NAME [ STRING ]
+    eval "getvar $1 \$${1+\"\$$1 \"}\"$2\""
+}
+_wqargs() { #@ DESCRIPTION: Weak-quotes all but the last argument appending
+            #@              them in order, to last argument referenced name.
+            #@ USAGE: _wqpprs [ ARG1 [ ARG2 .. ] ] NAME
+            #@        /!\ - WARNINGS: - /!\
+            #@        * Last arg. must be a valid name
+            #@        * DO NOT CALL DIRECTLY, use below wrapper instead.
     # Local variables ("local" must be function's first statement)
-    local qtd
-    while [ $# -gt 1 ]; do
-        eval "getvar qtd \$$#"
+    local qtd ## Last quoted args string temporary storage
+    while [ $# -gt 1 ]; do     ## While this is not the last arg..
+        eval "getvar qtd \$$#" ## Save last arg. referenced string
+        ## Rewrite last arg. ref. string w/temp. +space +quoted current arg.
         eval "setvar \$$# \${qtd:+\"\$qtd \"}\\\"\"\$1\"\\\""
-        shift
+        shift                  ## Remove current arg from list
     done
 }
-wqargs() { #@ DESCRIPTION:
+wqargs() { #@ DESCRIPTION: Weak-quotes all but 1st arg. & storing them in order,
+           #@              to the 1st arg. referenced name using _wqargs().
+           #@              Useful for building cmds in variables during runtime.
            #@ USAGE: NAME [ ARG1 [ ARG2 .. ] ]
-    local _$1
-    unset $1
-    set -- "$@" _$1
-    shift
-    _wqargs "$@"
-    eval "getvar \${$##_} \$$#"
+           #@        /!\ - WARNING! - /!\ $1 must be a valid name
+    # Local variables ("local" must be function's first statement)
+    local _$1            ## Prefix name to safely pass it to wrapped func.
+    eval "getvar _$1 $1" ## Store previous content of $1 referenced name
+    set -- "$@" _$1      ## Append name at the end as rquired by wrapped
+    shift                ## Now we can remove first arg
+    _wqargs "$@"         ## Issue wrapped function passing all args and name
+    eval "getvar \${$##_} \$$#" ## $1 is no longer the initial name after shift
+                                ## So remove it w/var. exp. before assigning.
 }
+fi

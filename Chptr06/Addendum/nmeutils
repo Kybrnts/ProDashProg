@@ -1,5 +1,5 @@
 #!/bin/sh
-#: Title       : Nameutils
+#: Title       : Nmeutils
 #: Date        : 2016-05-17
 #: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
 #: Version     : 1.0.0
@@ -41,13 +41,18 @@ getvar() { #@ DESCRIPTION: Stores value of $2 referenced var in $1 name. If $2
     eval "[ \"\${$2+X}\" = X ] && $1=\"\${$2}\"" ## Do not set $1 referenced
                                                  ## name if $2 is also unset
 }
+insvar() { #@ DESCRIPTON: Sets the value of variable indirectly referenced by
+           #@             $1 name (i.e. $1 name stored value).
+           #@ USAGE: insvar NAME [ VALUE ]
+           #@        /!\ - WARNING! - /!\ $1 must be a valid name and also the
+           #@        the content of that name.
+    eval "setvar \$$1 \"$2\""
+}
 ingvar() { #@ DESCRIPTION: Stores the value of variable indirectly referenced
-           #@              by name $2 in $1 (i.e. $2 name stored value). If $2
-           #@              name contains an invalid name, or that name is unset,
-           #@              $1 will remain and also will exit with >0 status.
+           #@              by name $2 in $1 (i.e. $2 name stored value). 
            #@ USAGE: ingvar NAMEW NAMER
-           #@        /!\ - WARNING! - /!\ $1 AND $2 must be a valid names
-    eval "vnme \"\$$2\"" || return 2  ## Test if $2 name contains a valid one
-    eval "getvar $1 \$$2" || return 3 ## Assign above's value to write name
+           #@        /!\ - WARNING! - /!\ $1 AND $2 must be a valid names, and
+           #@        also $2 stored value.
+    eval "getvar $1 \$$2" ## Assign above's value to write name
 }
 fi

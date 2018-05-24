@@ -9,7 +9,7 @@
 ##
 ## -- Main ---------------------------------------------------------------------
 main() {
-    case $1 in              ## Does 1 string matches
+    case $1 in              ## Does $1 string matches
         *"$2"*) return 0 ;; ## Second, preceeded or followed by more chars (*)?
         *) return 1 ;;      ## return success status, otherwise ret error stat
     esac
