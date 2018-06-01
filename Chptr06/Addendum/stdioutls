@@ -8,11 +8,11 @@
 #: Options     : N/A
 ##
 ## Declarations
-if [ "X$_SRC_NMEUTILS" = X ]; then ## Do not include if already included
-    readonly _SRC_NMEUTILS=:       ## Already sourced (included) test flag    
+if [ "X$_SRC_STDIOUTLS" = X ]; then ## Do not include if already included
+    readonly _SRC_STDIOUTLS=:       ## Already sourced (included) test flag    
 stdmsg() { #@ DESCRIPTION: Print messages to STDOUT
            #@ USAGE: stdmsg [ MSG ... ]
-    [ "${1+X}" = X ] && printf "%s\n" "$@"
+    [ "${1+X}" = X ] && printf -- "%s\n" "$@"
 }
 errmsg() { #@ DESCRIPTION: Print messages to STDERR prefixed by an error stamp
            #@ USAGE: stderr [ MSG ... ]

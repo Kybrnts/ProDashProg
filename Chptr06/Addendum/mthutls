@@ -1,5 +1,5 @@
 #!/bin/sh
-#: Title       : Mathutils
+#: Title       : Mthutls
 #: Date        : 2016-05-17
 #: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
 #: Version     : 1.0.0
@@ -8,11 +8,11 @@
 #: Options     : N/A
 ##
 ## -- Includes -----------------------------------------------------------------
-. "${0%/*}"/nameutils || exit 1 ## Include nmeutils functions
+. /usr/local/lib/nmeutls || exit 1 ## Utils for shell names
 ##
 ## Declarations
-if [ "X$_SRC_MTHUTILS" = X ]; then ## Do not include if already included
-    readonly _SRC_MTHUTILS=:       ## Already sourced (included) test flag
+if [ "X$_SRC_MTHUTLS" = X ]; then ## Do not include if already included
+    readonly _SRC_MTHUTLS=:       ## Already sourced (included) test flag
 ##
 ## Function declarations -------------------------------------------------------
 isodec() { #@ DESCRIPTION: Tests if $1 matches a ISO C std decimal constant, as
@@ -56,6 +56,7 @@ unsgn() { #@ DESCRIPTION:
           #@ USAGE:
     setvar $1 "${2#"${2%%[!-+]*}"}"
 }
+# Below functions require AWK
 if type awk date >/dev/null 2>&1; then
 _RNDSEED=1 ## Global seed number
 _RNDSEQI=0 ## Global random sequence number index
@@ -86,22 +87,4 @@ BEGIN{
     _RNDSEQI=$((_RNDSEQI + 1)) ## Glbl index must be increased outside subshell
 }
 fi
-incSrtN() { #@ DESCRIPTION:
-            #@ USAGE: incSrtN ARRAYNAME INT [ INT .. ]
-    local anme=$1 i 
-    shift
-    while :; do
-        
-        shift || break
-    done
-}
-decSrtN() {
-    :
-}
-decSrtA() {
-    :
-}
-decSrtA() {
-    :
-}
 fi

@@ -1,5 +1,5 @@
 #!/bin/sh
-#: Title       : Nmeutils
+#: Title       : Nmeutls
 #: Date        : 2016-05-17
 #: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
 #: Version     : 1.0.0
@@ -8,8 +8,8 @@
 #: Options     : N/A
 ##
 ## Declarations
-if [ "X$_SRC_NMEUTILS" = X ]; then ## Do not include if already included
-    readonly _SRC_NMEUTILS=:       ## Already sourced (included) test flag
+if [ "X$_SRC_NMEUTLS" = X ]; then ## Do not include if already included
+    readonly _SRC_NMEUTLS=:       ## Already sourced (included) test flag
 ##
 ## Function declarations -------------------------------------------------------
 vnme() { #@ DESCRIPTION: Tests if $1 string is a valid variable shell name.
