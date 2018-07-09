@@ -1,0 +1,43 @@
+#: Title       : Fleutls
+#: Date        : 2016-05-17
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Dash function declarations file
+#:             : Provides tools to work w/files
+#: Options     : N/A
+##
+## -- Includes -----------------------------------------------------------------
+. /usr/lib/shutls1.0/core/nmeutls || exit 1   ## Utilities for shell names
+##
+## Declarations
+if [ "X$_INC_FLEUTLS" = X ]; then ## Do not include if already included
+readonly _INC_FLEUTLS=:           ## Already sourced (included) test flag
+##
+## Function declarations -------------------------------------------------------
+dname() { #@ DESCRIPTION: Write de directory portion of $2 path to $1 name.
+          #@ USAGE: dnme NAME [ PATH ]
+          #@        /!\ - WARNING - /!\ It doesn't follow the POSIX spec for
+          #@        dirname command.
+    case $2 in
+        */*) ## Does provided path contain any "/" char?
+            setvar $1 "${2%/*}" ;;
+        *)   ## Assume provided path is relative pointing to file in $PWD, but
+             ## if it doesn't exists, return dot.
+            [ -e "$2" ] && setvar $1 "$PWD" || setvar $1 . ;;
+    esac
+}
+_bname() { #@ DESCRIPTION:
+           #@ USAGE: _bname NAME [ PATH ]
+    # Local variables ("local" must be function's first statement)
+    local bname
+    dname bname "$2"     ## Get dirname in bname variable
+    bname=${2#"$bname"/} ## Remove dirname from $2's beginning + trailing slash
+    setvar $1 "$bname"   ## Write result to ref. name
+}
+bname() {
+    # Local variables ("local" must be function's first statement)
+    local _$1
+    _bname _$1 ${2+"$2"}
+    getvar $1 _$1
+}
+fi

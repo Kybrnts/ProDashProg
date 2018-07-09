@@ -1,0 +1,135 @@
+#: Title       : Stdioutils
+#: Date        : 2016-05-17
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Dash function declarations file
+#:             : Provides usefull IO tools
+#: Options     : N/A
+##
+## Includes
+. /usr/lib/shutls1.0/core/strngutls || exit 1 ## Utilities for shell names
+##
+## -- Source time configuration ------------------------------------------------
+## These globals should be changed before including (i.e. sourcing) this file.
+## Any changes after sourcing won't impact on functions behaviour.
+# Time stamp extension enabled? Use 'Yes' to enable (enabled by default)
+_STDIOUTLS_EXT_DATE=${_STDIOUTLS_EXT_DATE:-Yes}
+# Allow predefined values or force the use of specific path for each command
+_STDIOUTLS_CMD_DATE=${_STDIOUTLS_CMD_DATE:-/bin/date} ## Date command
+# Create alias to force use specific path within functions, while keeping syntax
+# short. It will expand on func. declaration NOT on invocation. But DON'T put it
+# inside "if" or any other onstruct command list: it could render it useless!!
+alias date="$_STDIOUTLS_CMD_DATE"
+##
+## Declarations
+if [ "X$_INC_STDIOUTLS" = X ]; then ## Do not include if already included
+readonly _INC_STDIOUTLS=:           ## Already sourced (included) test flag
+##
+## -- Runtime configuration ----------------------------------------------------
+## This globals may be changed upon including scripts (i.e. scripts that sourced
+## this file) to tweak functions behaviour.
+# Verbosity level (0=Off, 1=Errors only, 2=Errors + Warnings, 3 or above =all.
+_STDIOUTLS_VRBSLVL=${_STDIOUTLS_VRBSLVL:-2} ## Default to 2
+# Stamps
+_STDIOUTLS_STSTMP="=======>"
+_STDIOUTLS_WRSTMP="WARNING:"
+_STDIOUTLS_ERSTMP='Error!!:'
+##
+## Function declarations -------------------------------------------------------
+stdmsg() { #@ DESCRIPTION: Print messages to STDOUT
+           #@ USAGE: stdmsg [ MSG .. ]
+    [ "${1+X}" = X ] && printf -- "%s\n" "$@"
+}
+errmsg() { #@ DESCRIPTION: Print messages to STERR prefixed by an error stamp
+           #@ USAGE: stderr [ MSG .. ]
+    stdmsg ${1+"${_STDIOUTLS_ERSTMP:-E} $@"} >&2
+}
+sstdmsg() { #@ DESCRIPTION: Print mssgs. to STDOUT prefixed by user def. stamp 
+            #@ USAGE: sstdmsg STAMP [ MSG .. ]
+    # Local variables ("local" must be function's first statement)
+    local stmp="$1" frmt= i=1 ## Initialize stamp, format and counter
+    shift                     ## Remove already stored $1
+    while [ $i -le $# ]; do   ## For each arg append format using LF as separat.
+        [ $i -eq 1 ] &&       ## First arg? Yes, add stamp & first %s frmt. spec
+            fmt="$stmp %s$_LF" || ## No, append %s indenting it stamp's with.
+                eval "fmt=\$fmt%\$((\${#stmp} + \${#$i} + 1)).\${#$i}s\$_LF"
+        i=$((i + 1))          ## Increase args counter
+    done                      ## Finally print formatted output
+    [ "${1+X}" = X ] && printf -- "$fmt" "$@"
+}
+serrmsg() { #@ DESCRIPTION: Print mssgs. to STDERR prefixed by user def. stamp
+            #@ USAGE: serrmsg STAMP [ MSG .. ]    
+    local stmp=${1:+"$1 "}"${_STDIOUTLS_ERSTMP:-E}"
+    shift
+    sstdmsg ${1+"$stmp" "$@"} >&2
+}
+stmpmsg() { #@ DESCRIPTION: Print mssgs. to STDOUT prefixed by user def. stamp
+            #@              only when global verbose level is at >=3 (DEBUG).
+            #@ USAGE: stmpstd stmpstd [ MSG .. ]
+    [ ${_STDIOUTLS_VRBSLVL:-2} -lt 3 ] || 
+        sstdmsg "${_STDIOUTLS_STSTMP:->}" ${1+"$@"}
+}
+stmpwrn() { #@ DESCRIPTION: Print warning messages to STDOUT prefixed by user
+            #@              def. stamp, when verbose level is at >=2 (WARN).
+            #@ USAGE: stmpwrn [ MSG .. ]
+    [ ${_STDIOUTLS_VRBSLVL:-2} -lt 2 ] ||
+        sstdmsg "${_STDIOUTLS_WRSTMP:-W}" ${1+"$@"}
+}
+stmperr() { #@ DESCRIPTION: Print error messages to STDERR prefixed by user
+            #@              def. stamp, when global verbose level is at >=1.
+            #@ USAGE: stmperr [ MSG .. ]
+    [ ${_STDIOUTLS_VRBSLVL:-2} -lt 1 ] || serrmsg "" ${1+"$@"}
+}
+fi
+##
+## Time stamp output extension -------------------------------------------------
+# Below declarations provide complementary tools. To include them it is possible
+# to source this file again by setting specific global value to 'Yes'. However
+# that will work only when some external commands are available.
+if [ "$_STDIOUTLS_EXT_DATE" = Yes -a "X$_INC_STDIOUTLS_EXT_DATE" = X ]; then
+readonly _INC_STDIOUTLS_EXT_DATE=: ## Already sourced (included) test flag
+# Test for requried external commands availability or fail
+[ -x "$_STDIOUTLS_CMD_DATE" ] ||
+    { printf "Stdioutls: $_STDIOUTLS_CMD_DATE not found\n"; exit 1; }
+dtemsg() { #@ DESCRIPTION: Print mssgs. to STDOUT prefixed by a timestamp whose
+           #@              format is defined by $1 argument.
+           #@ USAGE: dtemsg DATE_FORMAT [ MSG ... ]
+    local stmp
+    stmp="$(date +"$1" 2>/dev/null)" || stmp=HH:MM:SS
+    shift
+    stmp=$stmp$_SP${_STDIOUTLS_STSTMP:->}
+    [ $_STDIOUTLS_VRBSLVL -lt 3 ] || sstdmsg "$stmp" ${1+"$@"}
+}
+dtewrn() { #@ DESCRIPTION: Print warnings to STDOUT prefixed by timestamp whose
+           #@              format is defined by $1 argument.
+           #@ USAGE: dtewrn DATE_FORMAT [ MSG ... ]
+    local stmp
+    stmp="$(date +"$1" 2>/dev/null)" || stmp=HH:MM:SS
+    shift
+    stmp=$stmp$_SP${_STDIOUTLS_WRSTMP:-W}
+    [ $_STDIOUTLS_VRBSLVL -lt 2 ] || sstdmsg "$stmp" ${1+"$@"}
+}
+dteerr() { #@ DESCRIPTION: Print mssgs. to STDERR prefixed by a timestamp whose
+           #@              format is defined by $1 argument.
+           #@ USAGE: dteerr DATE_FORMAT [ MSG ... ]
+    local stmp
+    stmp="$(date +"$1" 2>/dev/null)" || stmp=HH:MM:SS
+    shift
+    stmp=$stmp
+    [ $_STDIOUTLS_VRBSLVL -lt 1 ] || serrmsg "$stmp" ${1+"$@"}
+}
+tmemsg() { #@ DESCRIPTION: Print messages to STDOUT prefixed by timestamp.
+           #@ USAGE: tmemsg [ MSG ... ]
+    dtemsg "[%H:%M:%S]" ${1+"$@"}
+}
+tmewrn() { #@ DESCRIPTION: Print warnings to STDOUT prefixed by timestamp.
+           #@ USAGE: tmewrn [ MSG ... ]
+    dtewrn "[%H:%M:%S]" ${1+"$@"}
+}
+tmeerr() { #@ DESCRIPTION: Print messages to STDERR prefixed by timestamp.
+           #@ USAGE: tmeerr [ MSG ... ]
+    dteerr "[%H:%M:%S]" ${1+"$@"}
+}
+fi
+# Alias no longer needed
+unalias date

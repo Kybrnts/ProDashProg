@@ -8,10 +8,11 @@
 #: Options     : N/A
 ##
 ## -- Includes -----------------------------------------------------------------
-. "${0%/*}"/nameutils || exit 1 ## Include nmeutils functions
+. /usr/local/lib/nmeutls || exit 1 ## Utils for shell names
 ##
 ## Function declarations -------------------------------------------------------
-sum() { #@ DESCRIPTION:
+sum() { #@ DESCRIPTION: Writes the sum of two nonnegative integers $2 + $3 in $1
+        #@              ref. name, implementing a recursive definition of sum.
         #@ USAGE: sum NAME NONEGINT1 NONEGINT2
     if [ $(($3 < 1)) -eq 1 ]; then ## Recursion base case: sum = m + 0 = m
         setvar $1 $2
@@ -20,7 +21,8 @@ sum() { #@ DESCRIPTION:
         eval "setvar $1 \$((\$$1 + 1))"
     fi   
 }
-prd() { #@ DESCRIPTION:
+prd() { #@ DESCRIPTION: Writes the product of two nonnegative ints. $2*$3 in $1
+        #@              ref. name, implementing a recursive def. of product.
         #@ USAGE: sum NAME NONEGINT1 NONEGINT2
     if [ $(($2 < 1 || $3 < 1)) -eq 1 ]; then ## Rec. 1st base case: prod = m*0=0
         setvar $1 0
@@ -31,43 +33,46 @@ prd() { #@ DESCRIPTION:
         eval "sum $1 \$$1 \$2"
     fi
 }
-_fib() { #@ DESCRIPTION:
-         #@ USAGE: _fib NAME NONEGINT
-    # Local variables ("local" must be function's first statement)
-    local tmp
-    if [ $(($2 < 2)) -eq 1 ]; then
+fct() { #@ DESCRIPTION: Writes the factorial of $2 nonnegative int. in $1 name
+        #@ USAGE: fact NAME NONEGINT
+    if [ $(($2 < 1)) -eq 1 ]; then ## Rec. base case 0! = 1
         setvar $1 1
-    else
-        _fib $1 $(($2 - 2))
-        getvar tmp $1
-        _fib $1 $(($2 - 1))
-        eval "sum $1 \$tmp \$$1"
+    else                           ## Other: (m+1)! = (m+1)*n!
+        fct $1 $(($2 - 1))
+        eval "prd $1 \$$1 \$2"
     fi
 }
-fib() { #@ DESCRIPTION:
+_fib() { #@ DESCRIPTION: Writes the corresponding fibonacci sequence element of
+         #@              $2 value in $1 name.
+         #@ USAGE: _fib NAME NONEGINT
+         #@        /!\ - WARNING - /!\ DO NOT CALL DIRECTLY, use below wrapper.
+    # Local variables ("local" must be function's first statement)
+    local tmp
+    if [ $(($2 < 2)) -eq 1 ]; then ## Accordign to Fibonacci's definition:
+        setvar $1 1                ## F(0) = F(1) = 1.
+    else                           ## Remaining recursion c ases will follow:
+        _fib $1 $(($2 - 2))        ## Store 1st partial result F(n) in global
+        getvar tmp $1              ## Save it temporairly and locally
+        _fib $1 $(($2 - 1))        ## Get second partian lreult F(n+1) in global
+        eval "sum $1 \$tmp \$$1"   ## Write definitive result to global name.
+    fi
+}
+fib() { #@ DESCRIPTION: Writes fib's element of $2 in $1 name using _fib()
         #@ USAGE: fib [ _fib() args.. ]
     # Local variables ("local" must be function's first statement)
     local _$1
     _fib _$1 $2
     getvar $1 _$1
 }
-ackr() { #@ DESCRIPTION:
+ackr() { #@ DESCRIPTION: Writes the corresponding ackerman's sequence element of
+         #@              $2 on $3 values in $1 name.
          #@ USAGE: _ack NAME NONEGINT1 NONEGINT2
-    if [ $(($2 < 1)) -eq 1 ]; then
+    if [ $(($2 < 1)) -eq 1 ]; then        ## Recursion base case A(0,N) = N+1
         sum $1 $3 1
-    elif [ $(($3 < 1)) -eq 1 ]; thenfct
+    elif [ $(($3 < 1)) -eq 1 ]; then      ## Case A(M,0) = A(M-1,1)
         ackr $1 $(($2 - 1)) 1
-    else
+    else                                  ## Case A(M, N) = A(M-1,A(M, N - 1))
         ackr $1 $2 $(($3 - 1))
-        eval "ackr $1 \$((\$2 - 1)) \$$1"
-    fi
-}
-fct() { #@ DESCRIPTION:
-        #@ USAGE: fact NAME NONEGINT
-    if [ $(($2 < 1)) -eq 1 ]; then
-        setvar $1 1
-    else
-        fct $1 $(($2 - 1))
-        eval "prd $1 \$$1 \$2"
+        eval "ackr $1 \$((\$2 - 1)) \$$1" ## Write result to referenced name
     fi
 }

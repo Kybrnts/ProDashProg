@@ -1,0 +1,123 @@
+#: Title       : Procutls
+#: Date        : 2016-05-17
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Dash function declarations file
+#:             : 
+#: Options     : N/A
+##
+## Includes
+. /usr/lib/shutls1.0/core/nmeutls || exit 1   ## Utilities for shell names
+. /usr/lib/shutls1.0/core/strngutls || exit 1 ## Utilities for shell names
+. /usr/lib/shutls1.0/core/stdioutls || exit 1 ## Utilities for shell names
+##
+## -- Source time configuration ------------------------------------------------
+## These globals should be changed before including (i.e. sourcing) this file.
+## Any changes after sourcing won't impact on functions behaviour.
+_PROCUTLS_CMD_SH=${_PROCUTLS_CMD_SH:-/bin/sh}        ## Shell command
+_PROCUTLS_CMD_SLEEP=${_STDIOUTILS_CMD_SLEEP:-/bin/sleep}   ## Sleep cmd
+_PROCUTLS_CMD_PS=${_STDIOUTILS_CMD_PS:-/bin/ps}            ## Ps comd
+_PROCUTLS_CMD_MKFIFO=${_PROCUTLS_CMD_MKFIFO:-/bin/mkfifo}  ## Mkfifo cmd
+# Create alias to force use specific path within functions, while keeping syntax
+# short. It will expand on func. declaration NOT on invocation. But DON'T put it
+# inside "if" or any other onstruct command list: it could render it useless!!
+alias sh="$_PROCUTLS_CMD_SH" sleep="$_PROCUTLS_CMD_SLEEP" \
+      ps="$_PROCUTLS_CMD_PS" mkfifo="$_PROCUTLS_CMD_MKFIFO"
+##
+## Declarations
+if [ "X$_INC_PROCUTILS" = X ]; then ## Do not define if already defined
+readonly _INC_PROCUTILS=:           ## So far used only for consistency
+# Test for requried commands availability or fail
+[ -x "$_PROCUTLS_CMD_SH" ] ||
+    { printf "Procutls: $_PROCUTLS_CMD_SH not found\n"; exit 1; }
+[ -x "$_PROCUTLS_CMD_SLEEP" ] ||
+    { printf "Procutls: $_PROCUTLS_CMD_SLEEP not found\n"; exit 1; }
+[ -x "$_PROCUTLS_CMD_PS" ] ||
+    { printf "Procutls: $_PROCUTLS_CMD_PS not found\n"; exit 1; }
+[ -x "$_PROCUTLS_CMD_MKFIFO" ] ||
+    { printf "Procutls: $_PROCUTLS_CMD_MKFIFO not found\n"; exit 1; }
+##
+## Function declarations -------------------------------------------------------
+tmout() { #@ DESCRIPTION: Execute command w/a timeout upon whose expiration
+          #@              SIGKILL is sent to the process. If that is blocked,
+          #@              then subsequent SIGKILL will attempt to terminate it
+          #@              after a certain delay.
+          #@ USAGE: tmout SECS COMMAND
+    # Local variables ("local" must be function's first statement)
+    local tout cmd=
+    tout=$1                       ## Get first pos. par. as seconds to timeout
+    shift 1                       ## Remove it
+    wqargs cmd ${1+"$@"}
+    shift $#
+    sh -c "{                      ## Start killer process in backgnd
+set -m                            ## Enable job control
+alias ps=\"\$_PROCUTLS_CMD_PS\"   ## Use same alias in killer process
+alias sleep=\"\$_PROCUTLS_CMD_SLEEP\"
+intvl=1 dly=2 tout=$tout          ## Initialize interval, delay and timeout
+while [ \$tout -gt 0 ]; do        ## While we still have time
+    if ! ps -o pid -p \$$; then   ## Frgnd proc running? ($$ expnds before back)
+        wait \$$                  ## No, so wait to capture exit status
+        exit \$?                  ##     Exit w/foreground's exit stat
+    fi                            ## Yes, so..
+    sleep \$intvl                 ## * Sleep for interval before asking again
+    tout=\$((tout - intvl))       ## * Decrease timeout
+done                              ## Out of time, and killer will do it's job
+    kill -s TERM \$$              ## Try to TERM foreground process
+    sleep \$dly                   ## Delay the KILL a bit
+    if ps -o pid -p \$$; then     ## Is foreground still running?
+        kill -s KILL \$$          ## Yes, so kill it
+        sleep \$dly               ## Await before checking again
+        if ps -o pid -p \$$; then ## If it still running then..
+            exit 3                ## Finish w/distinctive error
+        fi                        
+        exit 2                    ## Process didn't TERMINATED but KILLED
+    fi
+    exit 1                        ## Process TERMINATED
+} >/dev/null 2>&1 &               ## Fork nullifying output
+exec $cmd"                        ## Replace foreground execution w/command's
+}
+_TMPFFID=0  ## Unique incremental temporary fifo ID
+_mkTFfo() { #@ DESCRIPTION: Creates single temp fifo in /tmp for each invocation
+            #@              during current instance of script updating unique
+            #@              global ID and storing full path in $1 name. Fifo's
+            #@              permission bits may be set to $2 value.
+            #@ USAGE: _mkTFfo NAME [ MODE ]
+            #@        /!\ - WARNINGS: - /!\
+            #@        * $1 must be a valid name
+            #@        * DO NOT CALL DIRECTLY, use mkTFfo() wrapper instead.
+    # Local variables ("local" must be function's first statement)
+    local n tffp
+    # Initialize fifo's path and an attempts counter
+    tffp=/tmp/${0##*/}.$$.$_TMPFFID.tmp n=0
+    stmpmsg "Creating named pipe.."
+    # While path used, change path and try create fifo again, limiting attempts.
+    # Use mode if present, nullify mkfifo's output and limit execution time.
+    while ! tmout 1 mkfifo ${2+-m "$2"} "$tffp" 1>/dev/null 2>&1; do
+        if [ ! -e "$tffp" ]; then                 ## failed but no fifo there?
+            stmperr "Failed to create named pipe" ## * Display error msg
+            return 1                              ## * Report to calling env.
+        fi                                        ## Failed due to existing ffo?
+        stmpwrn "Existing named pipe $tffp"       ## Displsy warning
+        if [ $((n=n+1)) -gt 50 ]; then            ## Increase attempts counter
+            stmperr "Too many named pipes."       ## Attempts above limit?
+            stmpmsg "Will NOT try again."         ## * Display error
+            return 2                              ## * Report to calling env.
+        fi                                        ## Attempts below limit, so
+        stmpmsg "Trying again.."                  ## try again.
+        _TMPFFID=$((_TMPFFID < 999 ? _TMPFFID + 1 : 0)) ## Increase global ID
+        tffp=/tmp/${0##*/}.$$.$_TMPFFID.tmp             ## Change path
+    done                                            ## Fifo created!
+    stmpmsg "Done."                                 ## Display that
+    _TMPFFID=$((_TMPFFID < 999 ? _TMPFFID + 1 : 0)) ## Increase ID (now used)
+    setvar $1 "$tffp"                               ## Write path to output name
+}
+mkTFfo() { #@ DESCRIPTION: Creates single temp fifo in /tmp using _mkTFfo()
+           #@ USAGE: mkTFfo NAME [ MODE ]
+    # Local variables ("local" must be function's first statement)
+    local _$1                          ## Create tmp storage for wrapped output
+    _mkTFfo _$1 ${2+"$2"} || return $? ## call wrapped or end preserving status
+    getvar $1 _$1                      ## Set referenced name w/wrapped output
+}
+fi
+# Aliases no longer needed
+unalias sh sleep ps mkfifo

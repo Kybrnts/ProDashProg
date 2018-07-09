@@ -1,4 +1,3 @@
-#!/bin/sh
 #: Title       : Strngutls
 #: Date        : 2016-05-17
 #: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
@@ -8,14 +7,14 @@
 #: Options     : N/A
 ##
 ## Includes
-. /usr/local/lib/nmeutls || exit 1 ## Utils for shell names
+. /usr/lib/shutls1.0/core/nmeutls || exit 1   ## Utilities for shell names
 ##
 ## Declarations
-if [ "X$_SRC_STRNGUTLS" = X ]; then ## Do not include if already included
-    readonly _SRC_STRNGUTLS=:       ## Already sourced (included) test flag
-##
-## Declare the following useful symbols ----------------------------------------
-readonly _SP=" "  ## Space character (readonly uses word for assignment's LHS);
+if [ "X$_INC_STRNGUTLS" = X ]; then ## Do not include if already included
+readonly _INC_STRNGUTLS=:           ## Already sourced (included) test flag
+# Declare the following useful symbols
+readonly _NUL=    ## The null string (contains only the NUL char)
+readonly _SP=" "  ## Space character
 readonly _HT="	" ## Horizontal tab
 readonly _LF="
 "                 ## End of line (line feed)
@@ -58,16 +57,8 @@ alnm()  { #@ DESCRIPTION: Tests if $1 string is alphanumeric.
     esac
 }
 sapnd() { #@ DESCRIPTION:
-          #@ USAGE: sapnd NAME [ STRING ]
-    eval "setvar $1 \"\$${1}\$2\""
-}
-sspnd() { #@ DESCRIPTION:
-          #@ USAGE: sapnd NAME [ STRING [ SEPARATOR ] ]
-    eval "setvar $1 \${$1+\"\${$1}\${3:- }\"}\"\$2\""    
-}
-sspnd() { #@ DESCRIPTION:
-          #@ USAGE: sapnd NAME [ STRING [ SEPARATOR ] ]
-    eval "setvar $1 \${$1+\"\${$1}\${3:- }\"}\"\$2\""    
+          #@ USAGE: sapnd NAME NAME [ STRING [ SEPARATOR ] ]
+    eval "setvar $1 \${$1+\"\${$1}\${3}\"}\"\$2\""
 }
 _wqargs() { #@ DESCRIPTION: Weak-quotes all but the last argument, appending
             #@              them in order in last argument referenced name.
@@ -126,5 +117,32 @@ sqargs() { #@ DESCRIPTION: Strong-quotes all but 1st arg., storing them in order
     _sqargs "$@"         ## Issue wrapped function passing all args and name
     eval "getvar \${$##_} \${$#}" ## $1 is no longer initial name after shift,
                                   ## so access _$1 w/var. exp. before assigning.
+}
+ltrim() { #@ DESCRIPTION:
+          #@ USAGE: ltrim STRING [ TOTRIM ]
+    setvar $1 "${2#"${2%%[!"${3:-$IFS}"]*}"}"
+}
+rtrim() { #@ DESCRIPTION:
+          #@ USAGE: rtrim STRING [ TOTRIM ]
+    setvar $1 "${2%"${2##*[!"${3:-$IFS}"]}"}"
+}
+_getNxtFld() { #@ DESCRIPTION:
+               #@ USAGE: _getNxtFld NAME FLDSSTRNG [ SPRTR ]
+    # Local variables ("local" must be function's first statement)
+    local flds fld
+    getvar flds $2               ## Get $2 fields list into local
+    ltrim flds "$flds" "$3"      ## Remove $3 from beginning of list
+    isnul "$flds" && return 1    ## If no fields left, exit w/error
+    fld=${flds%%["${3:-$IFS}"]*} ## Rm al $3 chars from right to extract field
+    setvar $1 "$fld"             ## Write extracted field $1 ref. name
+    ltrim flds "$flds" "$fld"    ## Remove extracted field from list
+    setvar $2 "$flds"            ## Re-write field list w/out extacted field
+}
+getNxtFld() { #@ DESCRIPTION:
+              #@ USAGE:
+    # Local variables ("local" must be function's first statement)
+    local _$1
+    _getNxtFld _$1 $2 ${3+"$3"} || return $?
+    getvar $1 _$1
 }
 fi

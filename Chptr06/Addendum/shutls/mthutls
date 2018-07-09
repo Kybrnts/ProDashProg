@@ -1,4 +1,3 @@
-#!/bin/sh
 #: Title       : Mthutls
 #: Date        : 2016-05-17
 #: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
@@ -6,13 +5,27 @@
 #: Description : Dash function declarations file
 #:             : Adds usefull math tools to the shell that sources it
 #: Options     : N/A
+#: Environment :
 ##
 ## -- Includes -----------------------------------------------------------------
-. /usr/local/lib/nmeutls || exit 1 ## Utils for shell names
+. /usr/lib/shutls1.0/core/nmeutls || exit 1   ## Utilities for shell names
+##
+## -- Source time configuration ------------------------------------------------
+## These globals should be changed before including (i.e. sourcing) this file.
+## Any changes after sourcing won't impact on functions behaviour.
+# Random functions on? Use 'Yes' to enable (Enabled by default)
+_MTHUTLS_EXT_RAND=${_MTHUTLS_EXT_RAND:-Yes}
+# Allow predefined values or force the use of specific path for each command
+_MTHUTLS_CMD_DATE=${_MTHUTLS_CMD_DATE:-/bin/date}  ## Get system's date/time
+_MTHUTLS_CMD_AWK=${_MTHUTLS_CMD_AWK:-/usr/bin/awk} ## Scan. and proc. language
+# Create alias to force use specific path within functions, while keeping syntax
+# short. It will expand on func. declaration NOT on invocation. But DON'T put it
+# inside "if" or any other onstruct command list: it could render it useless!!
+alias date="$_MTHUTLS_CMD_DATE" awk="$_MTHUTLS_CMD_AWK"
 ##
 ## Declarations
-if [ "X$_SRC_MTHUTLS" = X ]; then ## Do not include if already included
-    readonly _SRC_MTHUTLS=:       ## Already sourced (included) test flag
+if [ "$_INC_MTHUTLS" = X ]; then ## Do not include if already included
+readonly _INC_MTHUTLS=:          ## Already sourced (included) test flag
 ##
 ## Function declarations -------------------------------------------------------
 isodec() { #@ DESCRIPTION: Tests if $1 matches a ISO C std decimal constant, as
@@ -53,17 +66,28 @@ aevint() { #@ DESCRIPTION: Test if $1 matches an ISO C standard integer as
     isodec "$1" || isohex "$1" || isooct "$1"
 }
 unsgn() { #@ DESCRIPTION:
-          #@ USAGE:
+          #@ USAGE: unsgn NAME [ STRING ]
     setvar $1 "${2#"${2%%[!-+]*}"}"
 }
-# Below functions require AWK
-if type awk date >/dev/null 2>&1; then
+fi
+##
+## Random functions extension --------------------------------------------------
+# Below declarations provide complementary tools. To include them it is possible
+# to source this file again by setting specific global value to 'Yes'. However
+# that will work only when some external commands are available.
+if [ "$_MTHUTLS_EXT_RAND" = Yes -a "X$_INC_MTHUTLS_EXT_RAND" = X ]; then
+readonly _INC_MTHUTLS_EXT_RAND=: ## Already sourced (included) test flag
+# Test for requried commands availability or fail
+[ -x "$_MTHUTLS_CMD_DATE" ] ||
+    { printf "Mthutls: $_MTHUTLS_CMD_DATE not found\n"; exit 1; }
+[ -x "$_MTHUTLS_CMD_AWK" ] ||
+    { printf "Mthutls: $_MTHUTLS_CMD_AWK not found\n"; exit 1; }
 _RNDSEED=1 ## Global seed number
 _RNDSEQI=0 ## Global random sequence number index
 srand() { #@ DESCRIPTION: Initialize the global seed number using an integer
           #@ USAGE: srand [ SEED ]
-    _RNDSEED=${1:-"$(date +%Y%m%d%H%M%S)"} ## Use current date/time by default
-    _RNDSEQI=0                             ## Reset sequence index
+    _RNDSEED=${1:-"$(date +%Y%m%d%H%M%S)"} ## Use current time by default
+    _RNDSEQI=0                             ## Reset global sequence index
 }
 rand() { #@ DESCRIPTION: Prints a number in the range $2 to $1 using a random
          #@              number of an already initialized sequence of randoms. 
@@ -87,4 +111,5 @@ BEGIN{
     _RNDSEQI=$((_RNDSEQI + 1)) ## Glbl index must be increased outside subshell
 }
 fi
-fi
+# Aliases no longer needed after function declarations
+unalias date awk
