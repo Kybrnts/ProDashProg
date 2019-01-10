@@ -43,6 +43,7 @@ tmout() { #@ DESCRIPTION: Execute command w/a timeout upon whose expiration
           #@              then subsequent SIGKILL will attempt to terminate it
           #@              after a certain delay.
           #@ USAGE: tmout SECS COMMAND
+          #@ NOTICE: See if ps usage can be replaced by "kill" builtin
     # Local variables ("local" must be function's first statement)
     local tout cmd=
     tout=$1                       ## Get first pos. par. as seconds to timeout

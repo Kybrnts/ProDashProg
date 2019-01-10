@@ -58,7 +58,8 @@ sstdmsg() { #@ DESCRIPTION: Print mssgs. to STDOUT prefixed by user def. stamp
     [ "${1+X}" = X ] && printf -- "$fmt" "$@"
 }
 serrmsg() { #@ DESCRIPTION: Print mssgs. to STDERR prefixed by user def. stamp
-            #@ USAGE: serrmsg STAMP [ MSG .. ]    
+            #@ USAGE: serrmsg STAMP [ MSG .. ]
+    # Local variables ("local" must be function's first statement)
     local stmp=${1:+"$1 "}"${_STDIOUTLS_ERSTMP:-E}"
     shift
     sstdmsg ${1+"$stmp" "$@"} >&2

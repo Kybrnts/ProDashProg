@@ -65,9 +65,11 @@ aevint() { #@ DESCRIPTION: Test if $1 matches an ISO C standard integer as
     # Validate if valid if valid isodec, hex or oct
     isodec "$1" || isohex "$1" || isooct "$1"
 }
-unsgn() { #@ DESCRIPTION:
+unsgn() { #@ DESCRIPTION: Removes any leading -/+ chars from $2 string, storing
+          #@              result in $1 name.
           #@ USAGE: unsgn NAME [ STRING ]
-    setvar $1 "${2#"${2%%[!-+]*}"}"
+    setvar $1 "${2#"${2%%[!-+]*}"}" ## Start by keeping any leading -/+ chars,
+                                    ## then remove those from beginning of $2.
 }
 fi
 ##
@@ -103,8 +105,8 @@ rand() { #@ DESCRIPTION: Prints a number in the range $2 to $1 using a random
     setvar $1 $(awk '
 BEGIN{
     max='${2:-32767}'; min='${3:-0}'
-    srand('${_RNDSEED:-1}');                   ## Initialize awks random seq
-    for(i = 0; i < '$_RNDSEQI'; i++)           ## Skip already used randoms
+    srand('${_RNDSEED:-1}');                 ## Initialize awks random seq
+    for(i = 0; i < '$_RNDSEQI'; i++)         ## Skip already used randoms
         rand();
     print int(min + rand()*(max - min + 1)); ## Transform random before print
 }')                            ## Generate number in subshell using awk
