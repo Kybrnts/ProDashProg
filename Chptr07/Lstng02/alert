@@ -1,0 +1,50 @@
+#!/bin/sh
+#: Title       : Alert
+#: Date        : 2016-05-21
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Executable Dash shell script
+#:             : Declares alert() to generate alert messages and tests repeat()
+#: Options     : N/A
+##
+## Includes
+. /usr/lib/shutls1.0/core/nmeutls || exit 1   ## Utilities for shell names
+. /usr/lib/shutls1.0/core/strngutls || exit 1 ## String manipulation tools
+. /usr/lib/shutls1.0/core/repeat || exit 1    ## Add strngutls repeat extension
+##
+## Function declarations -------------------------------------------------------
+alert() { #@ DESCRIPTION: Displays in-box-alert messages
+          #@ USAGE: alert '[ MESSAGE ]' [ BORDER ]
+    # Local variables ("local" must be function's first statement)
+    local hSde vSde fmt                     ## Box's horz & vert sides & format
+    repeat hSde "${2:-#}" $(( ${#1} + 8 ))  ## Create horizontal side
+    repeat vSde "${2:-#}" 2                 ## Create vertical sie
+    fmt='\a%s\n%2.2s  %s  %2.2s\n%s\n'      ## Set format string
+    # Render message in the box
+    printf "$fmt" "$hSde" "$vSde" "$1" "$vSde" "$hSde"
+}
+##
+## -- Main ---------------------------------------------------------------------
+main() {
+    local msg brd
+    ## Testing
+    msg="Do you realy whant to delete all your files?"
+    brd=
+    alert "$msg" $brd
+    echo
+    msg="Danger, will Robinson"
+    brd=$
+    alert "$msg" $brd
+    echo
+    msg="Action: Delete $USER account. Sure?"
+    brd=%#%
+    alert "$msg" $brd
+    echo
+    msg="Another in-box message"
+    brd="# #"
+    alert "$msg" "$brd"
+}
+##
+## -- Run! ---------------------------------------------------------------------
+main ## Call the main funciton
+##

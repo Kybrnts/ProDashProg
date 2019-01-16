@@ -31,8 +31,8 @@ isnul() { #@ DESCRIPTION: Tests if $1 contains a null string (i.e. just \0 char)
           #@ USAGE: isnul [ STRING ]
     [ X"$1" = X ] ## Fails when $1 is concatenation neutral
 }
-sbstr() { #@ DESCRIPTION: Tests if $1 string is a substring of $2
-          #@ USAGE: sbstr [ STR1 [ STR2 ] ]
+issbs() { #@ DESCRIPTION: Tests if $1 string is a substring of $2
+          #@ USAGE: issbs [ STR1 [ STR2 ] ]
     case $2 in              ## Does $1 string matches
         *"$1"*) return 0 ;; ## Second, preceeded or followed by more chars (*)?
     esac                    ## Prevent expansion of * or ? by quoting $1
@@ -56,8 +56,12 @@ alnm()  { #@ DESCRIPTION: Tests if $1 string is alphanumeric.
         *[!A-Za-z0-9]*) return 1 ;;
     esac
 }
-sapnd() { #@ DESCRIPTION:
-          #@ USAGE: sapnd NAME NAME [ STRING [ SEPARATOR ] ]
+apnd() { #@ DESCRIPTION: Appends $2 strng to $1 referenced strng using $3 strng
+         #@              as separator, writing result to $1 name. Separator is 
+         #@              used only if $1 string is nonull, making it useful in
+         #@              string-accumulating loops, in which the separator shuld
+         #@              be avoided on the first iteration.
+         #@ USAGE: apnd NAME [ STRING [ SEPARATOR ] ]
     eval "setvar $1 \${$1+\"\${$1}\${3}\"}\"\$2\""
 }
 _wqargs() { #@ DESCRIPTION: Weak-quotes all but the last argument, appending
@@ -72,7 +76,7 @@ _wqargs() { #@ DESCRIPTION: Weak-quotes all but the last argument, appending
         eval "getvar qtd \${$#}" ## Save last arg. referenced string
         ## Rewrite last arg. ref. string w/temp. +space +quoted current arg.
         eval "setvar \${$#} \${qtd:+\"\$qtd \"}\\\"\"\$1\"\\\""
-        shift                  ## Remove current arg from list
+        shift                    ## Remove current arg from list
     done
 }
 wqargs() { #@ DESCRIPTION: Weak-quotes all but 1st arg., storing them in order

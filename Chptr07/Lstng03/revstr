@@ -1,0 +1,33 @@
+#: Title       : repeat
+#: Date        : 2016-05-21
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Dash shell script function declarations file.
+#:             : Extends strngutls file by adding revstr().
+#: Options     : N/A
+##
+## Includes
+. /usr/lib/shutls1.0/core/nmeutls || exit 1   ## Utilities for shell names
+. /usr/lib/shutls1.0/core/strngutls || exit 1 ## String manipulation tools
+##
+## Function declarations -------------------------------------------------------
+_revstr() { #@ DESCRIPTION: Reverse $2 string chars order and write result in $2
+            #@              in $1 referenced name.
+            #@ USAGE: _revstr NAME [ STRING ]
+    # Local variables ("local" must be function's first statement)
+    local str tmp out        ## String to reverse, temporary storage and output
+    str=$2                   ## Set string to reverse
+    while ! isnul "$str"; do ## While string still has chars..
+        tmp=${str#?}         ## Store everything but first char in tmp
+        out=${str%$tmp}$out  ## Keep only str first char, placing it at begining
+        str=$tmp             ## Refresh string, effectively removing first char
+    done
+    setvar $1 "$out"         ## Write reversed string to referenced name.
+}
+revstr() { #@ DESCRIPTION: Reverse $2 string chars order and write result in $2
+           #@ USAGE:       referenced name revstr NAME [ STRING ]
+    # Local variables ("local" must be function's first statement)
+    local _$1             ## Prefix name so safely pass it ot wrapped func
+    _revstr _$1 ${2+"$2"} ## Call wrapped func, setting local by ref.
+    getvar $1 _$1         ## Set $1 referenced name
+}

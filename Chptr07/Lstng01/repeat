@@ -1,0 +1,42 @@
+#: Title       : repeat
+#: Date        : 2016-05-21
+#: Author      : "Kybernetes" <correodelkybernetes@gmail.com>
+#: Version     : 1.0.0
+#: Description : Dash shell script function declarations file.
+#:             : Extends strngutls file by adding repeat() function.
+#: Options     : N/A
+##
+## Includes
+. /usr/lib/shutls1.0/core/nmeutls || exit 1   ## Utilities for shell names
+. /usr/lib/shutls1.0/core/strngutls || exit 1 ## String manipulation tools
+##
+## Function declarations -------------------------------------------------------
+_repeat() { #@ DESCRIPTION: Repeat & accumulate $2 string in $1 name untill $3
+            #@              optionally given length is reached.
+            #@ USAGE: _repeat NAME '[ STRING ]' [ LENGHT ]
+    # Local variables ("local" must be function's first statement)
+    local str out tmp nle          ## Rep string, output, temporary and next len
+    str=$2                         ## Store rep. string (allow later assignment)
+    set -- $1 ${3:-${#2}}          ## Remove rep. str and set length def. value
+    if ! isnul "$str"; then        ## Do we have anything to repeat?
+        out= nle=${#str}           ## Set output and its nex lengh
+        while [ $nle -le $2 ]; do  ## Stop if next length exeeds allowed length
+            out=$out$str           ## Accumulate rep. string in output
+            nle=$((nle + ${#str})) ## Calculate next output's length
+        done                       ## Whole repeat string accumulation finishes
+        while [ ${#out} -lt $2 ]; do ## Space avail for rep string's substring?
+            tmp=${str#?}             ## Remove rep string's first char & store
+            out=$out${str%$tmp}      ## Accumulate rep string's first char
+            str=$tmp                 ## Refresh rep string
+        done
+    fi
+    setvar $1 "$out"               ## Set $1 referenced name
+}
+repeat() { #@ DESCRIPTION: Repeat & accumulate $2 string in $1 name untill $3
+           #@              optionally given length is reached, using _repeat().
+           #@ USAGE: repeat NAME '[ STRING ]' [ LENGHT ]
+    # Local variables ("local" must be function's first statement)
+    local _$1                       ## Prefix name to safely pass it to wrapped
+    _repeat _$1 ${2+"$2"} ${2+"$3"} ## Call wrapped, setting local by reference
+    getvar $1 _$1                   ## Set $1 referenced name
+}
